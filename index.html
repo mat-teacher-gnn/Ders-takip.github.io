@@ -1,152 +1,168 @@
+<!-- Index.html -->
 <!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ders Takip Uygulaması</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #121212;
-  color: #f0f0f0;
-  margin: 0;
-  padding: 0;
-}
-.container {
-  max-width: 600px;
-  margin: 50px auto;
-  background: #1f1f1f;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px #000;
-}
-input, button, select {
-  width: 100%;
-  padding: 10px;
-  margin: 5px 0;
-  border: none;
-  border-radius: 6px;
-  background: #333;
-  color: #fff;
-}
-button {
-  background: #3a8ef6;
-  cursor: pointer;
-}
-button:hover {
-  background: #1d6ae5;
-}
-.hidden {
-  display: none;
-}
-h2 {
-  text-align: center;
-  color: #ffcc00;
-}
-</style>
-</head>
-<body>
-<div class="container">
-  <h2>Ders Takip Uygulaması</h2>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <title>Öğrenci Günlük Takip</title>
+    <style>
+      body { font-family: Arial, sans-serif; max-width:900px; margin:20px auto; }
+      .card { border:1px solid #ddd; padding:16px; border-radius:8px; margin-bottom:16px; background:#fafafa; }
+      label { display:block; margin-top:8px; }
+      input[type=text], input[type=number], select { width:100%; padding:8px; margin-top:4px; box-sizing:border-box; }
+      button { padding:8px 12px; margin-top:12px; cursor:pointer; }
+      .hidden { display:none; }
+      table { width:100%; border-collapse:collapse; margin-top:12px; }
+      table th, table td { border:1px solid #ccc; padding:6px; text-align:left; }
+    </style>
+  </head>
+  <body>
+    <h2>Öğrenci Günlük Takip</h2>
 
-  <!-- Giriş / Kayıt -->
-  <div id="loginSection">
-    <input id="username" type="text" placeholder="Kullanıcı Adı">
-    <input id="password" type="password" placeholder="Şifre">
-    <button onclick="login()">Giriş Yap</button>
-    <button onclick="register()">Kayıt Ol</button>
-  </div>
-
-  <!-- Ana Panel -->
-  <div id="appSection" class="hidden">
-    <h3 id="welcome"></h3>
-    <select id="ders">
-      <option>Türkçe</option>
-      <option>Matematik</option>
-      <option>Sosyal Bilgiler</option>
-      <option>Fen Bilgisi</option>
-      <option>Din Kültürü</option>
-      <option>İngilizce</option>
-    </select>
-    <input id="dogru" type="number" placeholder="Doğru Sayısı">
-    <input id="yanlis" type="number" placeholder="Yanlış Sayısı">
-    <input id="kitap" type="number" placeholder="Okunan Kitap Sayısı">
-    <button onclick="kaydet()">Kaydet</button>
-    <button onclick="cikis()">Çıkış Yap</button>
-    <h4>Kayıtlarım</h4>
-    <div id="kayitlar"></div>
-  </div>
-</div>
-
-<script>
-function getUsers() {
-  return JSON.parse(localStorage.getItem("users") || "{}");
-}
-function saveUsers(users) {
-  localStorage.setItem("users", JSON.stringify(users));
-}
-function login() {
-  const username = usernameInput.value.trim();
-  const password = passwordInput.value.trim();
-  const users = getUsers();
-  if (users[username] && users[username].password === password) {
-    localStorage.setItem("activeUser", username);
-    showApp();
-  } else {
-    alert("Kullanıcı adı veya şifre hatalı!");
-  }
-}
-function register() {
-  const username = usernameInput.value.trim();
-  const password = passwordInput.value.trim();
-  const users = getUsers();
-  if (users[username]) {
-    alert("Bu kullanıcı zaten kayıtlı!");
-    return;
-  }
-  users[username] = { password, data: [] };
-  saveUsers(users);
-  alert("Kayıt oluşturuldu!");
-}
-function kaydet() {
-  const ders = document.getElementById("ders").value;
-  const dogru = parseInt(document.getElementById("dogru").value) || 0;
-  const yanlis = parseInt(document.getElementById("yanlis").value) || 0;
-  const kitap = parseInt(document.getElementById("kitap").value) || 0;
-  const users = getUsers();
-  const activeUser = localStorage.getItem("activeUser");
-  const kayit = { tarih: new Date().toLocaleString(), ders, dogru, yanlis, kitap };
-  users[activeUser].data.push(kayit);
-  saveUsers(users);
-  showRecords();
-}
-function showRecords() {
-  const users = getUsers();
-  const activeUser = localStorage.getItem("activeUser");
-  const kayitlar = users[activeUser].data;
-  const div = document.getElementById("kayitlar");
-  div.innerHTML = kayitlar.map(k => `
-    <div style="border-bottom:1px solid #555; padding:5px;">
-      <b>${k.ders}</b> | Doğru: ${k.dogru} | Yanlış: ${k.yanlis} | Kitap: ${k.kitap}<br>
-      <small>${k.tarih}</small>
+    <div id="loginCard" class="card">
+      <h3>Giriş</h3>
+      <label>Kullanıcı adı <input id="username" type="text"></label>
+      <label>Şifre <input id="password" type="text"></label>
+      <button onclick="doLogin()">Giriş Yap</button>
+      <div id="loginMsg" style="color:red;margin-top:8px;"></div>
     </div>
-  `).join("");
-}
-function showApp() {
-  document.getElementById("loginSection").classList.add("hidden");
-  document.getElementById("appSection").classList.remove("hidden");
-  const activeUser = localStorage.getItem("activeUser");
-  document.getElementById("welcome").textContent = `Hoş geldin, ${activeUser}!`;
-  showRecords();
-}
-function cikis() {
-  localStorage.removeItem("activeUser");
-  document.getElementById("appSection").classList.add("hidden");
-  document.getElementById("loginSection").classList.remove("hidden");
-}
-const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
-if (localStorage.getItem("activeUser")) showApp();
-</script>
-</body>
+
+    <div id="studentPanel" class="card hidden">
+      <h3>Günlük Giriş (Öğrenci)</h3>
+      <div>Kullanıcı: <span id="who"></span></div>
+      <label>Ders
+        <select id="subject">
+          <!-- subjectler script ile doldurulacak -->
+        </select>
+      </label>
+      <label>Çözülen soru sayısı <input id="solved" type="number" min="0" value="0"></label>
+      <label>Yanlış sayısı <input id="wrong" type="number" min="0" value="0"></label>
+      <label>Not (opsiyonel) <input id="note" type="text"></label>
+      <button onclick="submitEntry()">Kaydet</button>
+      <button onclick="showHistory()">Geçmişi Göster</button>
+      <div id="studentMsg" style="color:green;margin-top:8px;"></div>
+
+      <div id="history" class="hidden">
+        <h4>Geçmiş Kayıtlar</h4>
+        <table id="historyTable"><thead><tr><th>Tarih</th><th>Ders</th><th>Çözülen</th><th>Yanlış</th><th>Not</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+
+    <div id="adminPanel" class="card hidden">
+      <h3>Admin Paneli</h3>
+      <button onclick="loadAggregate()">Toplu Döküm Göster</button>
+      <button onclick="exportCSV()">CSV İndir</button>
+      <div id="adminMsg" style="margin-top:8px;"></div>
+      <div id="aggregate"></div>
+    </div>
+
+    <script>
+      const SUBJECTS = ["Türkçe","Matematik","Fen","Sosyal"];
+      // doldur subject select
+      const subjectSelect = document.getElementById('subject');
+      SUBJECTS.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s; opt.textContent = s;
+        subjectSelect.appendChild(opt);
+      });
+
+      let currentUser = null;
+      let currentRole = null;
+
+      function doLogin(){
+        const u = document.getElementById('username').value.trim();
+        const p = document.getElementById('password').value;
+        document.getElementById('loginMsg').textContent = 'Giriş kontrol ediliyor...';
+        google.script.run.withSuccessHandler(res => {
+          if(res.ok){
+            currentUser = u;
+            currentRole = res.role;
+            document.getElementById('loginCard').classList.add('hidden');
+            if(res.role === 'student'){
+              document.getElementById('who').textContent = currentUser;
+              document.getElementById('studentPanel').classList.remove('hidden');
+            } else if(res.role === 'admin'){
+              document.getElementById('adminPanel').classList.remove('hidden');
+            }
+            document.getElementById('loginMsg').textContent = '';
+          } else {
+            document.getElementById('loginMsg').textContent = res.error || 'Giriş başarısız';
+          }
+        }).login(u,p);
+      }
+
+      function submitEntry(){
+        const subject = document.getElementById('subject').value;
+        const solved = document.getElementById('solved').value;
+        const wrong = document.getElementById('wrong').value;
+        const note = document.getElementById('note').value;
+        google.script.run.withSuccessHandler(res => {
+          if(res.ok){
+            document.getElementById('studentMsg').textContent = 'Kayıt eklendi.';
+            // alanları temizle
+            document.getElementById('solved').value = 0;
+            document.getElementById('wrong').value = 0;
+            setTimeout(()=>document.getElementById('studentMsg').textContent='',2000);
+          } else {
+            document.getElementById('studentMsg').style.color = 'red';
+            document.getElementById('studentMsg').textContent = 'Hata: ' + (res.error || 'bilinmiyor');
+          }
+        }).addEntry(currentUser, subject, solved, wrong, note);
+      }
+
+      function showHistory(){
+        google.script.run.withSuccessHandler(data => {
+          const tbody = document.querySelector('#historyTable tbody');
+          tbody.innerHTML = '';
+          if(data.length===0){
+            tbody.innerHTML = '<tr><td colspan="5">Kayıt yok</td></tr>';
+          } else {
+            data.forEach(r => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `<td>${r.date}</td><td>${r.subject}</td><td>${r.solved}</td><td>${r.wrong}</td><td>${r.note || ''}</td>`;
+              tbody.appendChild(tr);
+            });
+          }
+          document.getElementById('history').classList.remove('hidden');
+        }).getStudentHistory(currentUser);
+      }
+
+      function loadAggregate(){
+        google.script.run.withSuccessHandler(report => {
+          const container = document.getElementById('aggregate');
+          container.innerHTML = '';
+          if(report.length===0){
+            container.textContent = 'Henüz veri yok.';
+            return;
+          }
+          report.forEach(r => {
+            const div = document.createElement('div');
+            div.style.borderTop = '1px solid #eee';
+            div.style.paddingTop = '8px';
+            let html = `<strong>${r.username}</strong> — Toplam Çözülen: ${r.totalSolved}, Toplam Yanlış: ${r.totalWrong}<br/>`;
+            html += 'Ders bazlı: <ul>';
+            for(const s in r.perSubject){
+              html += `<li>${s}: çözülen ${r.perSubject[s].solved}, yanlış ${r.perSubject[s].wrong}</li>`;
+            }
+            html += '</ul>';
+            div.innerHTML = html;
+            container.appendChild(div);
+          });
+        }).getAggregateReport();
+      }
+
+      function exportCSV(){
+        google.script.run.withSuccessHandler(csv => {
+          // CSV'yi indir
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'aggregate.csv';
+          a.click();
+          URL.revokeObjectURL(url);
+        }).exportAggregateCSV();
+      }
+    </script>
+  </body>
 </html>
