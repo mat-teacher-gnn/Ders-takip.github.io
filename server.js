@@ -1,4 +1,4 @@
-```js
+
 req.user = payload;
 next();
 }
@@ -51,4 +51,4 @@ res.json({ users: result });
 
 
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
-```
+
