@@ -34,9 +34,7 @@
         <th>Ders</th><th>Doğru</th><th>Yanlış</th>
       </tr>
     </thead>
-    <tbody id="entryTable">
-      <!-- JS ile doldurulacak -->
-    </tbody>
+    <tbody id="entryTable"></tbody>
   </table>
   <button onclick="saveData()">Kaydet</button>
 </div>
@@ -61,7 +59,6 @@
 </div>
 
 <script>
-// Kullanıcılar (email, kullanıcı adı, şifre)
 const users = [
   {email: 'yanikeymen525@gmail.com', name:'Eymen burn', password:'aB3dF7gH'},
   {email: 'sewdamsonsuz2@gmail.com', name:'İrem Köseoğlu', password:'K9mN4pQr'},
@@ -71,11 +68,8 @@ const users = [
 ];
 
 let currentUser = null;
-let records = []; // Kullanıcının kayıtları
-
 const dersler = ['Türkçe','Matematik','Sosyal','Fen','İngilizce','Din'];
 
-// Login fonksiyonu
 function login() {
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
@@ -84,12 +78,12 @@ function login() {
     currentUser = user;
     document.getElementById('loginDiv').classList.add('hidden');
     showEntryForm();
+    loadRecords();
   } else {
     document.getElementById('loginError').textContent = 'E-posta veya şifre hatalı!';
   }
 }
 
-// Veri giriş formunu oluştur
 function showEntryForm() {
   const tbody = document.getElementById('entryTable');
   tbody.innerHTML = '';
@@ -103,7 +97,6 @@ function showEntryForm() {
   document.getElementById('entryDiv').classList.remove('hidden');
 }
 
-// Kaydet fonksiyonu
 function saveData() {
   const today = new Date().toISOString().slice(0,10);
   const entry = { tarih: today };
@@ -111,16 +104,28 @@ function saveData() {
     entry[d+'_correct'] = parseInt(document.getElementById(d+'_correct').value) || 0;
     entry[d+'_wrong'] = parseInt(document.getElementById(d+'_wrong').value) || 0;
   });
-  records.push(entry);
+
+  // Kullanıcının kaydı localStorage'da saklanacak
+  let userRecords = JSON.parse(localStorage.getItem(currentUser.email)) || [];
+  userRecords.push(entry);
+  localStorage.setItem(currentUser.email, JSON.stringify(userRecords));
+
   document.getElementById('entryDiv').classList.add('hidden');
   showRecords();
 }
 
-// Kayıtları göster
+function loadRecords() {
+  const userRecords = JSON.parse(localStorage.getItem(currentUser.email)) || [];
+  if(userRecords.length > 0) {
+    showRecords();
+  }
+}
+
 function showRecords() {
   const tbody = document.getElementById('recordsTable').querySelector('tbody');
   tbody.innerHTML = '';
-  records.forEach(r => {
+  const userRecords = JSON.parse(localStorage.getItem(currentUser.email)) || [];
+  userRecords.forEach(r => {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${r.tarih}</td>` +
       dersler.map(d => `<td>${r[d+'_correct']}</td><td>${r[d+'_wrong']}</td>`).join('');
