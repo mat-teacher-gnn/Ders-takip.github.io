@@ -11,7 +11,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f0f4f8; }
         .card { background-color: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 10px; }
-        /* Make table header sticky for better mobile viewing */
         .sticky-header th { position: sticky; top: 0; background-color: #f9fafb; z-index: 10; }
     </style>
     <!-- Firebase SDK Imports -->
@@ -21,7 +20,7 @@
         import { getFirestore, collection, query, orderBy, limit, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 
-        // Gerekli global değişkenlerin yüklenmesi
+        // Gerekli global değişkenlerin yüklenmesi (Hata düzeltmesi: Eksikse {} kullan)
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -31,6 +30,7 @@
         
         let db, auth, userId = null;
         let isAdmin = false;
+        let isFirebaseReady = false; // Firebase'in başarılı başlatılıp başlatılmadığını tutar
 
         // Globalde kullanılacak fonksiyonları window objesine ata
         window.saveData = saveData;
@@ -53,19 +53,28 @@
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8军(hashBuffer));
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
             const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
             return hashHex;
         }
 
         async function initFirebase() {
+            setLogLevel('Debug');
+            
+            // Hata Düzeltmesi: Yapılandırma eksikse veya boşsa, hata ver ve devam etme
+            if (!Object.keys(firebaseConfig).length || !firebaseConfig.projectId) {
+                const message = "Firebase yapılandırması eksik. Lütfen Canvas ortamında olduğunuzdan emin olun veya manuel config girin. (Veri kaydetme/görüntüleme çalışmayacaktır)";
+                console.error(message);
+                document.getElementById('auth-container').innerHTML = `<div class="text-red-600 font-semibold">${message}</div>`;
+                document.getElementById('data-container').innerHTML = `<div class="p-8 text-center text-red-600 bg-red-100 rounded-lg">${message}</div>`;
+                return; // Firebase Ready değil, çık
+            }
+            
             try {
-                setLogLevel('Debug');
-                if (!Object.keys(firebaseConfig).length) throw new Error("Firebase yapılandırması eksik.");
-
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+                isFirebaseReady = true;
 
                 // 1. Kimlik Doğrulama Dinleyicisi
                 onAuthStateChanged(auth, async (user) => {
@@ -73,7 +82,7 @@
                         userId = user.uid;
                         const userEmail = user.email || "Anonim";
                         
-                        // Yönetici Kontrolü (Sadece e-posta ile giriş yapanlar için)
+                        // Yönetici Kontrolü
                         if (user.email) {
                             const emailHash = await sha256(userEmail.toLowerCase());
                             isAdmin = emailHash === ADMIN_EMAIL_HASH;
@@ -104,8 +113,10 @@
                 }
 
             } catch (error) {
-                console.error("Firebase başlatma hatası:", error);
-                document.getElementById('app-container').innerHTML = `<div class="p-6 text-center text-red-600 bg-red-100 rounded-lg">Uygulama başlatılamadı: ${error.message}</div>`;
+                console.error("Firebase başlatma hatası (Kritik):", error);
+                const errorMessage = `Uygulama başlatılamadı: ${error.message}. Tarayıcı konsolunu kontrol edin.`;
+                document.getElementById('auth-container').innerHTML = `<div class="text-red-600 font-semibold">${errorMessage}</div>`;
+                document.getElementById('data-container').innerHTML = `<div class="p-8 text-center text-red-600 bg-red-100 rounded-lg">${errorMessage}</div>`;
             }
         }
         
@@ -157,7 +168,7 @@
             const authContainer = document.getElementById('auth-container');
             const dataContainer = document.getElementById('data-container');
             
-            if (uid && auth.currentUser.email) {
+            if (uid && auth.currentUser && auth.currentUser.email) {
                 // Giriş Yapmış Kullanıcı (Yönetici veya Öğrenci)
                 authContainer.innerHTML = `
                     <div class="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-3">
@@ -177,7 +188,7 @@
                 // Anonim veya Çıkış Yapmış Kullanıcı
                 authContainer.innerHTML = `
                     <div id="email-input-container" class="space-y-3 p-4 card w-full md:w-80">
-                        <p class="text-center font-semibold text-gray-700">Öğrenci Girişi</p>
+                        <p class="text-center font-semibold text-gray-700">Öğrenci Girişi (E-posta ile)</p>
                         <input id="email-input" type="email" placeholder="E-posta Adresiniz" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500" />
                         <button onclick="handleEmailSignIn()" class="w-full px-4 py-2 font-semibold text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition duration-150">Giriş Bağlantısı Gönder</button>
                     </div>
@@ -189,6 +200,10 @@
         
         // E-posta ile Giriş Bağlantısı Gönderme
         async function handleEmailSignIn() {
+            if (!isFirebaseReady) {
+                updateMessage("Uygulama sunucuya bağlanamadı. Giriş işlemi yapılamaz.", "error");
+                return;
+            }
             const emailInput = document.getElementById('email-input');
             const email = emailInput.value.trim();
 
@@ -205,12 +220,13 @@
                 updateMessage(`Giriş bağlantısı ${email} adresine gönderildi. Lütfen e-postanızı kontrol edin.`, "success");
             } catch (error) {
                 console.error("Giriş bağlantısı gönderme hatası:", error);
-                updateMessage("Giriş bağlantısı gönderilemedi. Hata: " + error.message, "error");
+                updateMessage("Giriş bağlantısı gönderilemedi. E-posta adresinizi ve ayarlarınızı kontrol edin.", "error");
             }
         }
 
         // Çıkış Yapma
         async function handleLogout() {
+            if (!isFirebaseReady) return;
             try {
                 await signOut(auth);
                 updateMessage("Başarıyla çıkış yaptınız.", "info");
@@ -237,22 +253,30 @@
 
         // Veri Yolu Seçimi
         function getDataCollectionPath() {
+            if (!isFirebaseReady || !userId) return null;
+
             const base = `/artifacts/${appId}/`;
             // Yönetici tüm genel verileri görsün (public/data)
             if (isAdmin) {
                 return `${base}public/data/student_performance`;
             } 
             // Öğrenci kendi özel verilerini görsün (users/{userId})
-            if (userId) {
-                return `${base}users/${userId}/student_performance`;
+            if (auth.currentUser && auth.currentUser.email) {
+                 return `${base}users/${userId}/student_performance`;
             }
-            return null; // Giriş yapılmamışsa
+            return null; // Anonim kullanıcı veri göremez
         }
 
         // Veri Kaydetme
         async function saveData() {
-            if (!userId || !auth.currentUser.email) {
-                updateMessage("Kaydetmek için e-posta ile giriş yapmalısınız.", "error");
+            if (!isFirebaseReady) {
+                 updateMessage("Sunucu bağlantısı yok. Veri kaydedilemiyor.", "error");
+                 return;
+            }
+            
+            // KRİTİK KONTROL: Sadece e-posta ile giriş yapanlar kayıt yapabilir.
+            if (!userId || !auth.currentUser || !auth.currentUser.email) {
+                updateMessage("Kayıt yapmak için e-posta ile giriş yapmalısınız.", "error");
                 return;
             }
 
@@ -261,7 +285,7 @@
                 userEmail: auth.currentUser.email,
                 userId: userId,
                 timestamp: Date.now(),
-                lessons: {} // Tüm ders verilerini lessons objesi içinde topla
+                lessons: {}
             };
 
             let totalEntries = data.booksRead;
@@ -282,12 +306,11 @@
             }
 
             try {
-                // Veriyi her zaman öğrencinin kendi özel koleksiyonuna kaydet (private)
+                // 1. Öğrencinin kendi özel koleksiyonuna kaydet (private)
                 const privateCollectionRef = collection(db, `/artifacts/${appId}/users/${userId}/student_performance`);
                 await addDoc(privateCollectionRef, data);
 
-                // YÖNETİCİ görünümü için veriyi genel (public) koleksiyona da kaydet
-                // Bu sayede Halil Hoca tek bir koleksiyondan tüm öğrencileri görebilir.
+                // 2. YÖNETİCİ görünümü için veriyi genel (public) koleksiyona da kaydet
                 const adminViewCollectionRef = collection(db, `/artifacts/${appId}/public/data/student_performance`);
                 await addDoc(adminViewCollectionRef, data);
 
@@ -302,11 +325,12 @@
 
         // Veri Dinleyicisi
         function startDataListeners() {
+            if (!isFirebaseReady) return;
             const collectionPath = getDataCollectionPath();
             if (!collectionPath) return;
 
             const collectionRef = collection(db, collectionPath);
-            const q = query(collectionRef, orderBy("timestamp", "desc"), limit(50)); // Son 50 kayıt
+            const q = query(collectionRef, orderBy("timestamp", "desc"), limit(50));
 
             onSnapshot(q, (snapshot) => {
                 const records = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -411,7 +435,7 @@
                 <form id="data-form" onsubmit="event.preventDefault(); saveData();" class="space-y-4">
                     
                     <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Ders Girişleri Döngüsü -->
+                        <!-- Türkçe -->
                         <div class="bg-blue-100 p-3 rounded-lg">
                             <label class="block text-sm font-bold text-blue-700 mb-1">Türkçe</label>
                             <div class="flex space-x-2">
@@ -419,6 +443,7 @@
                                 <input type="number" id="turkish-w" placeholder="Yanlış (Y)" min="0" class="w-1/2 p-2 border border-blue-200 rounded-lg focus:ring-blue-500" />
                             </div>
                         </div>
+                        <!-- Matematik -->
                         <div class="bg-red-100 p-3 rounded-lg">
                             <label class="block text-sm font-bold text-red-700 mb-1">Matematik</label>
                             <div class="flex space-x-2">
@@ -426,6 +451,7 @@
                                 <input type="number" id="math-w" placeholder="Yanlış (Y)" min="0" class="w-1/2 p-2 border border-red-200 rounded-lg focus:ring-red-500" />
                             </div>
                         </div>
+                        <!-- Sosyal Bilgiler -->
                         <div class="bg-green-100 p-3 rounded-lg">
                             <label class="block text-sm font-bold text-green-700 mb-1">Sosyal Bilgiler</label>
                             <div class="flex space-x-2">
@@ -433,6 +459,7 @@
                                 <input type="number" id="social-w" placeholder="Yanlış (Y)" min="0" class="w-1/2 p-2 border border-green-200 rounded-lg focus:ring-green-500" />
                             </div>
                         </div>
+                        <!-- Fen Bilgisi -->
                         <div class="bg-yellow-100 p-3 rounded-lg">
                             <label class="block text-sm font-bold text-yellow-700 mb-1">Fen Bilgisi</label>
                             <div class="flex space-x-2">
@@ -440,6 +467,7 @@
                                 <input type="number" id="science-w" placeholder="Yanlış (Y)" min="0" class="w-1/2 p-2 border border-yellow-200 rounded-lg focus:ring-yellow-500" />
                             </div>
                         </div>
+                        <!-- Din Kültürü -->
                         <div class="bg-purple-100 p-3 rounded-lg">
                             <label class="block text-sm font-bold text-purple-700 mb-1">Din Kültürü</label>
                             <div class="flex space-x-2">
@@ -447,6 +475,7 @@
                                 <input type="number" id="religion-w" placeholder="Yanlış (Y)" min="0" class="w-1/2 p-2 border border-purple-200 rounded-lg focus:ring-purple-500" />
                             </div>
                         </div>
+                        <!-- İngilizce -->
                         <div class="bg-indigo-100 p-3 rounded-lg">
                             <label class="block text-sm font-bold text-indigo-700 mb-1">İngilizce</label>
                             <div class="flex space-x-2">
@@ -491,4 +520,4 @@
     </div>
 
 </body>
-              </html>
+    </html>
