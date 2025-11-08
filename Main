@@ -136,6 +136,73 @@
   </script>
 </body>
 </html>
+      <tbody id="dersTablosu"></tbody>
+    </table>
+
+    <div style="text-align:center; margin-bottom: 1rem;">
+      <label>Okunan Kitap Sayısı: </label>
+      <input type="number" id="kitapSayisi" min="0" value="0">
+    </div>
+
+    <div style="text-align:center;">
+      <button onclick="verileriKaydet()">Kaydet</button>
+      <button onclick="verileriYukle()">Verileri Yükle</button>
+      <button onclick="verileriTemizle()" style="background:#e74c3c;">Temizle</button>
+    </div>
+  </main>
+
+  <script>
+    const dersler = ["Türkçe", "Matematik", "Sosyal Bilgiler", "Fen Bilgisi", "Din Kültürü", "İngilizce"];
+
+    function tabloOlustur() {
+      const tbody = document.getElementById("dersTablosu");
+      tbody.innerHTML = "";
+      dersler.forEach(ders => {
+        const satir = document.createElement("tr");
+        satir.innerHTML = `
+          <td>${ders}</td>
+          <td><input type='number' min='0' id='dogru_${ders}'></td>
+          <td><input type='number' min='0' id='yanlis_${ders}'></td>
+        `;
+        tbody.appendChild(satir);
+      });
+    }
+
+    function verileriKaydet() {
+      const veriler = { kitapSayisi: document.getElementById("kitapSayisi").value, dersler: {} };
+      dersler.forEach(ders => {
+        veriler.dersler[ders] = {
+          dogru: document.getElementById(`dogru_${ders}`).value,
+          yanlis: document.getElementById(`yanlis_${ders}`).value
+        };
+      });
+      localStorage.setItem("dersVerileri", JSON.stringify(veriler));
+      alert("Veriler kaydedildi!");
+    }
+
+    function verileriYukle() {
+      const kayitli = JSON.parse(localStorage.getItem("dersVerileri"));
+      if (!kayitli) return alert("Kayıtlı veri bulunamadı.");
+      document.getElementById("kitapSayisi").value = kayitli.kitapSayisi || 0;
+      dersler.forEach(ders => {
+        document.getElementById(`dogru_${ders}`).value = kayitli.dersler[ders]?.dogru || 0;
+        document.getElementById(`yanlis_${ders}`).value = kayitli.dersler[ders]?.yanlis || 0;
+      });
+      alert("Veriler yüklendi!");
+    }
+
+    function verileriTemizle() {
+      if (confirm("Tüm verileri silmek istediğine emin misin?")) {
+        localStorage.removeItem("dersVerileri");
+        tabloOlustur();
+        document.getElementById("kitapSayisi").value = 0;
+      }
+    }
+
+    tabloOlustur();
+  </script>
+</body>
+</html>
             const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
             return hashHex;
         }
