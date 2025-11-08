@@ -1,176 +1,116 @@
-<!-- Index.html -->
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Öğrenci Takip Sistemi</title>
-    <style>
-      body { font-family: Arial, sans-serif; max-width:1000px; margin:16px auto; padding:8px;}
-      .card{border:1px solid #ddd;padding:14px;border-radius:8px;margin-bottom:12px;background:#fff;}
-      label{display:block;margin-top:8px;}
-      input, select { padding:8px; width:100%; box-sizing:border-box; }
-      button{padding:8px 12px;margin-top:10px;cursor:pointer;}
-      .hidden{display:none;}
-      table{width:100%;border-collapse:collapse;margin-top:8px;}
-      th,td{border:1px solid #ccc;padding:6px;text-align:left;}
-    </style>
-  </head>
-  <body>
-    <h2>Öğrenci Takip Sistemi</h2>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Kullanıcı Listesi Hazırlama</title>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f6f6;
+      color: #333;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      background: #1976d2;
+      color: white;
+      padding: 15px 0;
+      margin-bottom: 20px;
+    }
+    #container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    button {
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-top: 15px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0d47a1;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>Kullanıcı Listesi Hazırlama Aracı</h1>
+  <div id="container">
+    <p>Bu araç, tablondaki e-posta adreslerini kontrol eder ve tekrarlananları kaldırır.<br>
+    Ardından <b>“Kullanıcılar”</b> sayfasına yazılmaya hazır hale getirir.</p>
 
-    <div id="loginCard" class="card">
-      <h3>Giriş</h3>
-      <label>Email (kullanıcı adı)<input id="username" type="text" placeholder="ornek@ornek.com"></label>
-      <label>Şifre<input id="password" type="password"></label>
-      <button onclick="doLogin()">Giriş Yap</button>
-      <div id="loginMsg" style="color:red;margin-top:8px;"></div>
+    <div id="adim1">
+      <button onclick="listeyiGetir()">1️⃣ Mail Listesini Getir</button>
+      <div id="listeAlani"></div>
     </div>
 
-    <div id="studentPanel" class="card hidden">
-      <h3>Öğrenci Paneli — <span id="who"></span></h3>
-      <label>Ders
-        <select id="subject"></select>
-      </label>
-      <label>Doğru <input id="correct" type="number" min="0" value="0"></label>
-      <label>Yanlış <input id="wrong" type="number" min="0" value="0"></label>
-      <label>Not <input id="note" type="text"></label>
-      <button onclick="submitEntry()">Kaydet</button>
-      <button onclick="showHistory()">Geçmişi Göster</button>
-      <div id="studentMsg" style="color:green;margin-top:8px;"></div>
-
-      <div id="history" class="hidden">
-        <h4>Geçmiş Kayıtlar</h4>
-        <table id="historyTable"><thead><tr><th>Tarih</th><th>Ders</th><th>Doğru</th><th>Yanlış</th><th>Not</th></tr></thead><tbody></tbody></table>
-      </div>
+    <div id="adim2" style="display:none;">
+      <button onclick="sayfayaYaz()">2️⃣ Listeyi İkinci Sekmeye Yaz</button>
     </div>
 
-    <div id="adminPanel" class="card hidden">
-      <h3>Admin Paneli</h3>
-      <button onclick="loadUsers()">Kullanıcı Listesini Gör</button>
-      <button onclick="loadAggregate()">Toplu Döküm</button>
-      <button onclick="exportCSV()">CSV İndir</button>
-      <div id="adminMsg" style="margin-top:8px;"></div>
-      <div id="users"></div>
-      <div id="aggregate"></div>
-    </div>
+    <div id="status"></div>
+  </div>
 
-    <script>
-      const SUBJECTS = ["Türkçe","Matematik","Sosyal","Fen Bilimleri","İngilizce","Din Kültürü"];
-      // doldur subject select
-      const subjectSelect = document.getElementById('subject');
-      SUBJECTS.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s; opt.textContent = s;
-        subjectSelect.appendChild(opt);
-      });
+  <script>
+    let temizListe = [];
 
-      let currentUser = null;
-      let currentRole = null;
-
-      function doLogin(){
-        const u = document.getElementById('username').value.trim();
-        const p = document.getElementById('password').value;
-        document.getElementById('loginMsg').textContent = 'Kontrol ediliyor...';
-        google.script.run.withSuccessHandler(res=>{
-          if(res.ok){
-            currentUser = res.username || u;
-            currentRole = res.role;
-            document.getElementById('loginCard').classList.add('hidden');
-            if(res.role === 'student'){
-              document.getElementById('who').textContent = currentUser;
-              document.getElementById('studentPanel').classList.remove('hidden');
-            } else if(res.role === 'admin'){
-              document.getElementById('adminPanel').classList.remove('hidden');
-            }
-            document.getElementById('loginMsg').textContent = '';
-          } else {
-            document.getElementById('loginMsg').textContent = res.error || 'Giriş başarısız';
+    // 1️⃣ İlk buton: e-posta listesini getirir
+    function listeyiGetir() {
+      document.getElementById("status").textContent = "Liste alınıyor...";
+      google.script.run
+        .withSuccessHandler((sonuc) => {
+          temizListe = sonuc;
+          document.getElementById("status").textContent = "";
+          if (temizListe.length === 0) {
+            document.getElementById("listeAlani").innerHTML = "<p>Hiç kayıt bulunamadı!</p>";
+            return;
           }
-        }).login(u,p);
-      }
-
-      function submitEntry(){
-        const subject = document.getElementById('subject').value;
-        const correct = document.getElementById('correct').value;
-        const wrong = document.getElementById('wrong').value;
-        const note = document.getElementById('note').value;
-        google.script.run.withSuccessHandler(res=>{
-          if(res.ok){
-            document.getElementById('studentMsg').textContent = 'Kayıt eklendi.';
-            document.getElementById('correct').value = 0;
-            document.getElementById('wrong').value = 0;
-            setTimeout(()=>document.getElementById('studentMsg').textContent='',2000);
-          } else {
-            document.getElementById('studentMsg').style.color='red';
-            document.getElementById('studentMsg').textContent = 'Hata: ' + (res.error || '');
-          }
-        }).addEntry(currentUser, subject, correct, wrong, note);
-      }
-
-      function showHistory(){
-        google.script.run.withSuccessHandler(data=>{
-          const tbody = document.querySelector('#historyTable tbody');
-          tbody.innerHTML = '';
-          if(!data || data.length===0){
-            tbody.innerHTML = '<tr><td colspan="5">Kayıt yok</td></tr>';
-          } else {
-            data.forEach(r=>{
-              const tr = document.createElement('tr');
-              tr.innerHTML = `<td>${r.date}</td><td>${r.subject}</td><td>${r.correct}</td><td>${r.wrong}</td><td>${r.note||''}</td>`;
-              tbody.appendChild(tr);
-            });
-          }
-          document.getElementById('history').classList.remove('hidden');
-        }).getStudentHistory(currentUser);
-      }
-
-      // ---------- Admin fonksiyonları ----------
-      function loadUsers(){
-        google.script.run.withSuccessHandler(list=>{
-          const container = document.getElementById('users');
-          container.innerHTML = '<h4>Kullanıcılar</h4>';
-          if(!list || list.length===0){ container.innerHTML += '<div>Liste boş</div>'; return; }
-          const t = document.createElement('table');
-          t.innerHTML = '<thead><tr><th>Email</th><th>Username</th><th>Password</th><th>Sheet</th><th>Oluşturulma</th></tr></thead>';
-          const tbody = document.createElement('tbody');
-          list.forEach(u=>{
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${u.email}</td><td>${u.username}</td><td>${u.password}</td><td>${u.sheetName}</td><td>${u.createdAt}</td>`;
-            tbody.appendChild(tr);
+          let tablo = "<table><tr><th>#</th><th>E-posta</th><th>Kullanıcı Adı</th></tr>";
+          temizListe.forEach((k, i) => {
+            tablo += `<tr><td>${i + 1}</td><td>${k.email}</td><td>${k.ad}</td></tr>`;
           });
-          t.appendChild(tbody);
-          container.appendChild(t);
-        }).getUserList(true);
-      }
+          tablo += "</table>";
+          document.getElementById("listeAlani").innerHTML = tablo;
+          document.getElementById("adim2").style.display = "block";
+        })
+        .listeyiHazirla();
+    }
 
-      function loadAggregate(){
-        google.script.run.withSuccessHandler(report=>{
-          const container = document.getElementById('aggregate');
-          container.innerHTML = '<h4>Toplu Döküm</h4>';
-          if(!report || report.length===0){ container.innerHTML += '<div>Veri yok</div>'; return; }
-          report.forEach(r=>{
-            const div = document.createElement('div');
-            let html = `<strong>${r.email}</strong> — Toplam Doğru: ${r.totalCorrect}, Toplam Yanlış: ${r.totalWrong}<br/>Ders Bazlı:<ul>`;
-            for(const s in r.perSubject){
-              html += `<li>${s}: doğru ${r.perSubject[s].correct}, yanlış ${r.perSubject[s].wrong}</li>`;
-            }
-            html += '</ul>';
-            div.innerHTML = html;
-            container.appendChild(div);
-          });
-        }).getAggregateReport();
-      }
-
-      function exportCSV(){
-        google.script.run.withSuccessHandler(csv=>{
-          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url; a.download = 'aggregate.csv'; a.click();
-          URL.revokeObjectURL(url);
-        }).exportAggregateCSV();
-      }
-    </script>
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
-  </body>
+    // 2️⃣ İkinci buton: sonucu ikinci sekmeye yazar
+    function sayfayaYaz() {
+      document.getElementById("status").textContent = "Kayıtlar yazılıyor...";
+      google.script.run
+        .withSuccessHandler(() => {
+          document.getElementById("status").textContent = "✅ Kayıtlar başarıyla ikinci sekmeye yazıldı!";
+        })
+        .listeyiYaz(temizListe);
+    }
+  </script>
+</body>
 </html>
