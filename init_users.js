@@ -1,6 +1,3 @@
-
-
-```js
 // init_users.js
 const fs = require('fs');
 const { google } = require('googleapis');
@@ -48,4 +45,3 @@ console.log('Kullanıcılar eklendi.');
 
 
 main().catch(console.error);
-```
