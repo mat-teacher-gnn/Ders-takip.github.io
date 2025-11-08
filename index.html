@@ -1,288 +1,152 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Ders Takip - Lokal Kullanıcı Yönetimi (Demo)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ders Takip Uygulaması</title>
 <style>
-  body{font-family:Arial,Helvetica,sans-serif;background:#f3f6f8;margin:0;color:#222}
-  header{background:#0b70d2;color:#fff;padding:14px;text-align:center}
-  .wrap{display:flex;gap:16px;padding:16px;flex-wrap:wrap}
-  .col{background:#fff;border-radius:8px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,.06)}
-  .left{flex:0 0 360px}
-  .right{flex:1;min-width:320px}
-  label{display:block;font-size:13px;margin-top:8px;color:#333}
-  input[type=text],input[type=password],input[type=email],input[type=number]{width:100%;padding:8px;border-radius:6px;border:1px solid #ccc}
-  button{margin-top:10px;padding:8px 12px;border-radius:6px;border:none;background:#0b70d2;color:white;cursor:pointer}
-  button.ghost{background:#eee;color:#222}
-  table{width:100%;border-collapse:collapse;margin-top:8px}
-  th,td{padding:8px;border:1px solid #eee;text-align:center}
-  .small{font-size:13px;color:#666;margin-top:6px}
-  pre{background:#f6f8fb;padding:8px;border-radius:6px;overflow:auto}
+body {
+  font-family: Arial, sans-serif;
+  background: #121212;
+  color: #f0f0f0;
+  margin: 0;
+  padding: 0;
+}
+.container {
+  max-width: 600px;
+  margin: 50px auto;
+  background: #1f1f1f;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #000;
+}
+input, button, select {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  border: none;
+  border-radius: 6px;
+  background: #333;
+  color: #fff;
+}
+button {
+  background: #3a8ef6;
+  cursor: pointer;
+}
+button:hover {
+  background: #1d6ae5;
+}
+.hidden {
+  display: none;
+}
+h2 {
+  text-align: center;
+  color: #ffcc00;
+}
 </style>
 </head>
 <body>
-<header><h2>Ders Takip (Local Demo) — Kullanıcı Sistemi</h2></header>
+<div class="container">
+  <h2>Ders Takip Uygulaması</h2>
 
-<div class="wrap">
-  <div class="col left">
-    <h3>Hesap</h3>
-
-    <div id="authBox">
-      <label>Kullanıcı Adı</label>
-      <input id="loginUser" type="text" placeholder="kullaniciadi">
-      <label>Parola</label>
-      <input id="loginPass" type="password" placeholder="parola">
-      <button id="btnLogin">Giriş Yap</button>
-      <button id="btnShowRegister" class="ghost">Yeni Hesap Oluştur</button>
-      <p class="small">Dışa aktar / içe aktar ile <code>users.txt</code> ve <code>data.txt</code> dosya simülasyonu yapabilirsiniz.</p>
-    </div>
-
-    <div id="registerBox" style="display:none">
-      <label>İsim</label><input id="regName" type="text" placeholder="Ad Soyad">
-      <label>E-posta</label><input id="regMail" type="email" placeholder="mail@ornek.com">
-      <label>Kullanıcı Adı</label><input id="regUser" type="text" placeholder="kullaniciadi">
-      <label>Parola</label><input id="regPass" type="password" placeholder="parola">
-      <button id="btnRegister">Kayıt Ol</button>
-      <button id="btnCancelRegister" class="ghost">İptal</button>
-    </div>
-
-    <hr style="margin:12px 0">
-
-    <h4>Dosya (txt) İşlemleri</h4>
-    <button id="exportUsers" class="ghost">users.txt Dışa Aktar</button>
-    <button id="exportData" class="ghost">data.txt Dışa Aktar</button>
-    <label style="margin-top:8px">Dosya İçe Aktar (users / data)</label>
-    <input type="file" id="fileInput">
-    <p class="small">NOT: İçe aktarırken uygun yapıdaki .txt (JSON) dosyasını seçin.</p>
+  <!-- Giriş / Kayıt -->
+  <div id="loginSection">
+    <input id="username" type="text" placeholder="Kullanıcı Adı">
+    <input id="password" type="password" placeholder="Şifre">
+    <button onclick="login()">Giriş Yap</button>
+    <button onclick="register()">Kayıt Ol</button>
   </div>
 
-  <div class="col right">
-    <div id="panelLoggedOut">
-      <h3>Giriş yapın veya yeni hesap oluşturun</h3>
-      <p class="small">Kayıt sonrası verileriniz tarayıcıda saklanacak. Aynı kullanıcı ile giriş yaptığınızda kendi kayıtlarınızı göreceksiniz.</p>
-    </div>
-
-    <div id="panelUser" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <h3 id="welcomeUser">Hoşgeldin</h3>
-        <div>
-          <button id="btnLogout" class="ghost">Çıkış</button>
-        </div>
-      </div>
-
-      <h4>Dersler (Doğru / Yanlış)</h4>
-      <table id="dersTable">
-        <thead><tr><th>Ders</th><th>Doğru</th><th>Yanlış</th></tr></thead>
-        <tbody></tbody>
-      </table>
-
-      <label>Okunan Kitap Sayısı</label>
-      <input id="kitapInput" type="number" min="0" value="0">
-
-      <div style="margin-top:12px">
-        <button id="btnSaveData">Kaydet (Yerel)</button>
-        <button id="btnExportMyData" class="ghost">Kendi data.txt İndir</button>
-      </div>
-
-      <h4 style="margin-top:14px">Kullanıcıya Özel Raw Veriler</h4>
-      <pre id="rawData" style="height:140px;overflow:auto"></pre>
-    </div>
+  <!-- Ana Panel -->
+  <div id="appSection" class="hidden">
+    <h3 id="welcome"></h3>
+    <select id="ders">
+      <option>Türkçe</option>
+      <option>Matematik</option>
+      <option>Sosyal Bilgiler</option>
+      <option>Fen Bilgisi</option>
+      <option>Din Kültürü</option>
+      <option>İngilizce</option>
+    </select>
+    <input id="dogru" type="number" placeholder="Doğru Sayısı">
+    <input id="yanlis" type="number" placeholder="Yanlış Sayısı">
+    <input id="kitap" type="number" placeholder="Okunan Kitap Sayısı">
+    <button onclick="kaydet()">Kaydet</button>
+    <button onclick="cikis()">Çıkış Yap</button>
+    <h4>Kayıtlarım</h4>
+    <div id="kayitlar"></div>
   </div>
 </div>
 
 <script>
-/*
-  Basit localStorage tabanlı kullanıcı/döner veri sistemi.
-  - users_txt : kullanıcı listesi (JSON dizisi) -> simule edilmiş users.txt
-  - data_txt  : { username: {dersler:{...}, kitap: N } } -> simule edilmiş data.txt
-  Kullanıcılar SHA-256 ile hash'lenmiş parolalarla saklanır.
-*/
-
-/* \\ yardımcı: storage anahtarları */
-const USERS_KEY = 'users_txt';   // kullanıcılar (array of {user,name,mail,passHash})
-const DATA_KEY  = 'data_txt';    // veriler (object username->data)
-const LESSONS = ["Türkçe","Matematik","Sosyal Bilgiler","Fen Bilgisi","Din Kültürü","İngilizce"];
-
-/* \\ helper: DOM */
-const $ = id => document.getElementById(id);
-
-/* \\ helper: SHA-256 fonksiyonu (async) */
-async function sha256(str){
-  const enc = new TextEncoder().encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', enc);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b=>b.toString(16).padStart(2,'0')).join('');
+function getUsers() {
+  return JSON.parse(localStorage.getItem("users") || "{}");
 }
-
-/* \\ storage helper */
-function readUsers(){
-  try{ return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); }catch(e){ return []; }
+function saveUsers(users) {
+  localStorage.setItem("users", JSON.stringify(users));
 }
-function writeUsers(arr){ localStorage.setItem(USERS_KEY, JSON.stringify(arr)); }
-
-function readData(){
-  try{ return JSON.parse(localStorage.getItem(DATA_KEY) || '{}'); }catch(e){ return {}; }
-}
-function writeData(obj){ localStorage.setItem(DATA_KEY, JSON.stringify(obj)); }
-
-/* \\ UI: register / login toggle */
-$('btnShowRegister').addEventListener('click', ()=>{ $('authBox').style.display='none'; $('registerBox').style.display='block'; });
-$('btnCancelRegister').addEventListener('click', ()=>{ $('authBox').style.display='block'; $('registerBox').style.display='none'; });
-
-/* \\ Kayıt işlemi */
-$('btnRegister').addEventListener('click', async ()=>{
-  const name = $('regName').value.trim();
-  const mail = $('regMail').value.trim();
-  const user = $('regUser').value.trim();
-  const pass = $('regPass').value;
-  if(!name||!mail||!user||!pass){ alert('Tüm alanları doldurun'); return; }
-  const users = readUsers();
-  if(users.find(u=>u.user===user)){ alert('Kullanıcı adı zaten var'); return; }
-  const passHash = await sha256(pass);
-  users.push({user, name, mail, passHash});
-  writeUsers(users);
-  // data için başlangıç
-  const data = readData();
-  data[user] = { dersler: LESSONS.reduce((a,d)=>{a[d]={dogru:0,yanlis:0};return a},{}) , kitap:0 };
-  writeData(data);
-  alert('Kayıt başarılı. Giriş yapabilirsiniz.');
-  // reset form
-  $('regName').value=''; $('regMail').value=''; $('regUser').value=''; $('regPass').value='';
-  $('registerBox').style.display='none'; $('authBox').style.display='block';
-});
-
-/* \\ Giriş işlemi */
-$('btnLogin').addEventListener('click', async ()=>{
-  const user = $('loginUser').value.trim(); const pass = $('loginPass').value;
-  if(!user||!pass){ alert('Kullanıcı adı ve parola girin'); return; }
-  const users = readUsers(); const u = users.find(x=>x.user===user);
-  if(!u){ alert('Kullanıcı bulunamadı'); return; }
-  const hash = await sha256(pass);
-  if(hash !== u.passHash){ alert('Parola yanlış'); return; }
-  // başarılı
-  loadUserSession(u);
-});
-
-/* \\ Oturum başlatma */
-function loadUserSession(userObj){
-  sessionStorage.setItem('loggedUser', userObj.user);
-  $('panelLoggedOut').style.display='none';
-  $('panelUser').style.display='block';
-  $('welcomeUser').textContent = `Hoşgeldin, ${userObj.name} (${userObj.user})`;
-  renderUserData(userObj.user);
-}
-
-/* \\ oturum kapatma */
-$('btnLogout').addEventListener('click', ()=>{
-  sessionStorage.removeItem('loggedUser');
-  $('panelUser').style.display='none';
-  $('panelLoggedOut').style.display='block';
-});
-
-/* \\ render: kullanıcı verilerini göster */
-function renderUserData(username){
-  const data = readData();
-  if(!data[username]){ // yoksa oluştur
-    data[username] = { dersler: LESSONS.reduce((a,d)=>{a[d]={dogru:0,yanlis:0};return a},{}) , kitap:0 };
-    writeData(data);
+function login() {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  const users = getUsers();
+  if (users[username] && users[username].password === password) {
+    localStorage.setItem("activeUser", username);
+    showApp();
+  } else {
+    alert("Kullanıcı adı veya şifre hatalı!");
   }
-  // tablo doldur
-  const tbody = $('dersTable').querySelector('tbody'); tbody.innerHTML='';
-  LESSONS.forEach(ders=>{
-    const row = document.createElement('tr');
-    const dogru = data[username].dersler[ders].dogru;
-    const yanlis = data[username].dersler[ders].yanlis;
-    row.innerHTML = `<td>${ders}</td>
-      <td><input data-ders="${ders}" class="inpDogru" type="number" min="0" value="${dogru}"></td>
-      <td><input data-ders="${ders}" class="inpYanlis" type="number" min="0" value="${yanlis}"></td>`;
-    tbody.appendChild(row);
-  });
-  $('kitapInput').value = data[username].kitap || 0;
-  $('rawData').textContent = JSON.stringify(data[username], null, 2);
-  // input change listener
-  tbody.querySelectorAll('.inpDogru').forEach(inp=> inp.onchange = ()=> updateLocalFromUI(username));
-  tbody.querySelectorAll('.inpYanlis').forEach(inp=> inp.onchange = ()=> updateLocalFromUI(username));
-  $('kitapInput').onchange = ()=> updateLocalFromUI(username);
 }
-
-/* \\ veriyi UI -> localStorage kaydet */
-function updateLocalFromUI(username){
-  const data = readData();
-  if(!data[username]) return;
-  document.querySelectorAll('.inpDogru').forEach(i=>{
-    const ders = i.dataset.ders; data[username].dersler[ders].dogru = parseInt(i.value)||0;
-  });
-  document.querySelectorAll('.inpYanlis').forEach(i=>{
-    const ders = i.dataset.ders; data[username].dersler[ders].yanlis = parseInt(i.value)||0;
-  });
-  data[username].kitap = parseInt($('kitapInput').value)||0;
-  writeData(data);
-  $('rawData').textContent = JSON.stringify(data[username], null, 2);
-  alert('Veriler kaydedildi (lokal).');
-}
-
-/* \\ buton: kaydet */
-$('btnSaveData').addEventListener('click', ()=>{
-  const username = sessionStorage.getItem('loggedUser');
-  if(!username){ alert('Önce giriş yapın'); return; }
-  updateLocalFromUI(username);
-});
-
-/* \\ export users.txt (JSON format) */
-$('exportUsers').addEventListener('click', ()=>{
-  const blob = new Blob([ JSON.stringify(readUsers(), null, 2) ], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='users.txt'; a.click(); URL.revokeObjectURL(url);
-});
-
-/* \\ export data.txt (JSON format) */
-$('exportData').addEventListener('click', ()=>{
-  const blob = new Blob([ JSON.stringify(readData(), null, 2) ], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='data.txt'; a.click(); URL.revokeObjectURL(url);
-});
-
-/* \\ kullanıcıya özel data dosyası indir */
-$('btnExportMyData').addEventListener('click', ()=>{
-  const username = sessionStorage.getItem('loggedUser');
-  if(!username){ alert('Önce giriş yapın'); return; }
-  const data = readData(); const my = data[username] || {};
-  const blob = new Blob([ JSON.stringify(my, null, 2) ], {type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${username}_data.txt`; a.click();
-});
-
-/* \\ file import (users or data) */
-$('fileInput').addEventListener('change', (e)=>{
-  const f = e.target.files[0]; if(!f) return;
-  const reader = new FileReader();
-  reader.onload = (ev)=>{
-    try{
-      const parsed = JSON.parse(ev.target.result);
-      // zorunlu kontrol: array ise users, object ise data
-      if(Array.isArray(parsed)){
-        // users
-        writeUsers(parsed);
-        alert('users.txt içeriği yüklendi (localStorage).');
-      } else if(typeof parsed === 'object'){
-        // data
-        writeData(parsed);
-        alert('data.txt içeriği yüklendi (localStorage).');
-      } else alert('Geçersiz dosya formatı.');
-    }catch(err){ alert('Dosya okunamadı veya JSON değil.'); }
-  };
-  reader.readAsText(f);
-});
-
-/* \\ load last logged user (session) */
-window.addEventListener('load', ()=>{
-  const u = sessionStorage.getItem('loggedUser');
-  if(u){
-    const users = readUsers();
-    const userObj = users.find(x=>x.user===u);
-    if(userObj) loadUserSession(userObj);
+function register() {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  const users = getUsers();
+  if (users[username]) {
+    alert("Bu kullanıcı zaten kayıtlı!");
+    return;
   }
-});
+  users[username] = { password, data: [] };
+  saveUsers(users);
+  alert("Kayıt oluşturuldu!");
+}
+function kaydet() {
+  const ders = document.getElementById("ders").value;
+  const dogru = parseInt(document.getElementById("dogru").value) || 0;
+  const yanlis = parseInt(document.getElementById("yanlis").value) || 0;
+  const kitap = parseInt(document.getElementById("kitap").value) || 0;
+  const users = getUsers();
+  const activeUser = localStorage.getItem("activeUser");
+  const kayit = { tarih: new Date().toLocaleString(), ders, dogru, yanlis, kitap };
+  users[activeUser].data.push(kayit);
+  saveUsers(users);
+  showRecords();
+}
+function showRecords() {
+  const users = getUsers();
+  const activeUser = localStorage.getItem("activeUser");
+  const kayitlar = users[activeUser].data;
+  const div = document.getElementById("kayitlar");
+  div.innerHTML = kayitlar.map(k => `
+    <div style="border-bottom:1px solid #555; padding:5px;">
+      <b>${k.ders}</b> | Doğru: ${k.dogru} | Yanlış: ${k.yanlis} | Kitap: ${k.kitap}<br>
+      <small>${k.tarih}</small>
+    </div>
+  `).join("");
+}
+function showApp() {
+  document.getElementById("loginSection").classList.add("hidden");
+  document.getElementById("appSection").classList.remove("hidden");
+  const activeUser = localStorage.getItem("activeUser");
+  document.getElementById("welcome").textContent = `Hoş geldin, ${activeUser}!`;
+  showRecords();
+}
+function cikis() {
+  localStorage.removeItem("activeUser");
+  document.getElementById("appSection").classList.add("hidden");
+  document.getElementById("loginSection").classList.remove("hidden");
+}
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+if (localStorage.getItem("activeUser")) showApp();
 </script>
 </body>
 </html>
