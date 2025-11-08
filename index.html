@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Öğrenci Günlük Takip</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
+  .hidden { display: none; }
+  input { width: 60px; padding: 4px; margin: 2px; }
+  table { border-collapse: collapse; margin-top: 10px; background: #fff; }
+  th, td { border: 1px solid #999; padding: 6px 10px; text-align: center; }
+  button { margin-top: 10px; padding: 6px 12px; }
+</style>
+</head>
+<body>
+
+<h1>Öğrenci Günlük Soru Takibi</h1>
+
+<!-- Giriş Formu -->
+<div id="loginDiv">
+  <h3>Giriş Yap</h3>
+  <input type="email" id="email" placeholder="E-posta"><br>
+  <input type="password" id="password" placeholder="Şifre"><br>
+  <button onclick="login()">Giriş</button>
+  <p id="loginError" style="color:red;"></p>
+</div>
+
+<!-- Veri Girişi Formu -->
+<div id="entryDiv" class="hidden">
+  <h3>Doğru/Yanlış Girişi</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Ders</th><th>Doğru</th><th>Yanlış</th>
+      </tr>
+    </thead>
+    <tbody id="entryTable">
+      <!-- JS ile doldurulacak -->
+    </tbody>
+  </table>
+  <button onclick="saveData()">Kaydet</button>
+</div>
+
+<!-- Kayıtlar -->
+<div id="recordsDiv" class="hidden">
+  <h3>Kayıtlar</h3>
+  <table id="recordsTable">
+    <thead>
+      <tr>
+        <th>Tarih</th>
+        <th>Türkçe D</th><th>Türkçe Y</th>
+        <th>Matematik D</th><th>Matematik Y</th>
+        <th>Sosyal D</th><th>Sosyal Y</th>
+        <th>Fen D</th><th>Fen Y</th>
+        <th>İngilizce D</th><th>İngilizce Y</th>
+        <th>Din D</th><th>Din Y</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+// Kullanıcılar (email, kullanıcı adı, şifre)
+const users = [
+  {email: 'yanikeymen525@gmail.com', name:'Eymen burn', password:'aB3dF7gH'},
+  {email: 'sewdamsonsuz2@gmail.com', name:'İrem Köseoğlu', password:'K9mN4pQr'},
+  {email: 'pinarcaliskan76@gmail.com', name:'Yağmur', password:'W2xY6zQ8'},
+  {email: 'elifnuryilmaz204@gmail.com', name:'Nisanur Yılmaz', password:'R7tU5vWx'},
+  {email: 'merar7470@gmail.com', name:'Merve', password:'P1qR3sT9'}
+];
+
+let currentUser = null;
+let records = []; // Kullanıcının kayıtları
+
+const dersler = ['Türkçe','Matematik','Sosyal','Fen','İngilizce','Din'];
+
+// Login fonksiyonu
+function login() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const user = users.find(u => u.email === email && u.password === password);
+  if(user) {
+    currentUser = user;
+    document.getElementById('loginDiv').classList.add('hidden');
+    showEntryForm();
+  } else {
+    document.getElementById('loginError').textContent = 'E-posta veya şifre hatalı!';
+  }
+}
+
+// Veri giriş formunu oluştur
+function showEntryForm() {
+  const tbody = document.getElementById('entryTable');
+  tbody.innerHTML = '';
+  dersler.forEach(d => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${d}</td>
+      <td><input type="number" min="0" id="${d}_correct" value="0"></td>
+      <td><input type="number" min="0" id="${d}_wrong" value="0"></td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('entryDiv').classList.remove('hidden');
+}
+
+// Kaydet fonksiyonu
+function saveData() {
+  const today = new Date().toISOString().slice(0,10);
+  const entry = { tarih: today };
+  dersler.forEach(d => {
+    entry[d+'_correct'] = parseInt(document.getElementById(d+'_correct').value) || 0;
+    entry[d+'_wrong'] = parseInt(document.getElementById(d+'_wrong').value) || 0;
+  });
+  records.push(entry);
+  document.getElementById('entryDiv').classList.add('hidden');
+  showRecords();
+}
+
+// Kayıtları göster
+function showRecords() {
+  const tbody = document.getElementById('recordsTable').querySelector('tbody');
+  tbody.innerHTML = '';
+  records.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.tarih}</td>` +
+      dersler.map(d => `<td>${r[d+'_correct']}</td><td>${r[d+'_wrong']}</td>`).join('');
+    tbody.appendChild(tr);
+  });
+  document.getElementById('recordsDiv').classList.remove('hidden');
+}
+</script>
+
+</body>
+</html>
