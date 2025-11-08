@@ -1,138 +1,165 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ders Takip Uygulaması</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #2e86de;
-      color: white;
-      text-align: center;
-      padding: 1rem;
-      font-size: 1.5rem;
-    }
-    main {
-      max-width: 800px;
-      margin: 2rem auto;
-      background: white;
-      padding: 1.5rem;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 1rem;
-    }
-    th, td {
-      padding: 0.6rem;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-    th {
-      background-color: #f0f0f0;
-    }
-    input {
-      width: 80%;
-      padding: 0.3rem;
-      text-align: center;
-    }
-    button {
-      background: #2ecc71;
-      color: white;
-      border: none;
-      padding: 0.6rem 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-right: 0.5rem;
-    }
-    button:hover {
-      background: #27ae60;
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ders Takip - Giriş</title>
+<style>
+  body{font-family:Arial;margin:20px;background:#f6f8fb}
+  .card{max-width:740px;margin:0 auto;padding:16px;background:#fff;border-radius:8px;box-shadow:0 4px 14px rgba(20,20,30,.06)}
+  button{padding:8px 12px;border-radius:6px;border:0;cursor:pointer}
+  .google{background:#4285F4;color:#fff}
+  .email{background:#2ecc71;color:#fff}
+  .danger{background:#e74c3c;color:#fff}
+  .hidden{display:none}
+  input{padding:8px;width:100%;margin:6px 0;border-radius:6px;border:1px solid #ddd}
+</style>
 </head>
 <body>
-  <header>Ders Takip Uygulaması</header>
-  <main>
-    <table>
-      <thead>
-        <tr>
-          <th>Ders</th>
-          <th>Doğru</th>
-          <th>Yanlış</th>
-        </tr>
-      </thead>
-      <tbody id="dersTablosu"></tbody>
-    </table>
+<div class="card">
+  <h2>Giriş Yap</h2>
+  <div id="authArea">
+    <button id="btnGoogle" class="google">Google ile Giriş</button>
+    <hr/>
+    <input id="email" placeholder="E-posta"/>
+    <input id="password" placeholder="Parola" type="password"/>
+    <div style="display:flex;gap:8px">
+      <button id="btnEmailSign" class="email">E-posta ile Giriş / Kayıt</button>
+      <button id="btnSignOut" class="danger hidden">Çıkış</button>
+    </div>
+  </div>
 
-    <div style="text-align:center; margin-bottom: 1rem;">
-      <label>Okunan Kitap Sayısı: </label>
-      <input type="number" id="kitapSayisi" min="0" value="0">
+  <div id="userArea" class="hidden">
+    <h3>Hoşgeldiniz, <span id="userEmail"></span></h3>
+    <p>Bu kullanıcı <strong id="isAdmin">[yetki kontrol ediliyor]</strong></p>
+
+    <!-- Örnek: veri kayıt / yükleme düğmeleri -->
+    <div>
+      <button id="saveData">Ders verilerini kaydet</button>
+      <button id="loadData">Ders verilerini yükle</button>
+      <button id="adminAction" class="hidden">Admin: özel işlem</button>
     </div>
 
-    <div style="text-align:center;">
-      <button onclick="verileriKaydet()">Kaydet</button>
-      <button onclick="verileriYukle()">Verileri Yükle</button>
-      <button onclick="verileriTemizle()" style="background:#e74c3c;">Temizle</button>
-    </div>
-  </main>
+    <pre id="dbg" style="background:#f2f3f5;padding:8px;border-radius:6px;margin-top:8px"></pre>
+  </div>
+</div>
 
-  <script>
-    const dersler = ["Türkçe", "Matematik", "Sosyal Bilgiler", "Fen Bilgisi", "Din Kültürü", "İngilizce"];
+<!-- Firebase SDKs (modular) -->
+<script type="module">
+  // 1) install: bu sayfa direkt çalışır; production için bundler önerilir
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore.js";
 
-    function tabloOlustur() {
-      const tbody = document.getElementById("dersTablosu");
-      tbody.innerHTML = "";
-      dersler.forEach(ders => {
-        const satir = document.createElement("tr");
-        satir.innerHTML = `
-          <td>${ders}</td>
-          <td><input type='number' min='0' id='dogru_${ders}'></td>
-          <td><input type='number' min='0' id='yanlis_${ders}'></td>
-        `;
-        tbody.appendChild(satir);
-      });
+  // 2) Firebase config: kendi projenden al (Console -> Project settings)
+  const firebaseConfig = {
+    apiKey: "API_KEY_HERE",
+    authDomain: "PROJECT_ID.firebaseapp.com",
+    projectId: "PROJECT_ID",
+    // ... diğer alanlar
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Elements
+  const btnGoogle = document.getElementById('btnGoogle');
+  const btnEmailSign = document.getElementById('btnEmailSign');
+  const btnSignOut = document.getElementById('btnSignOut');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+
+  const userArea = document.getElementById('userArea');
+  const authArea = document.getElementById('authArea');
+  const userEmailSpan = document.getElementById('userEmail');
+  const isAdminSpan = document.getElementById('isAdmin');
+  const dbg = document.getElementById('dbg');
+  const adminActionBtn = document.getElementById('adminAction');
+
+  // Google Sign-In
+  btnGoogle.addEventListener('click', async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const res = await signInWithPopup(auth, provider);
+      dbg.textContent = JSON.stringify(res.user, null, 2);
+    } catch (err) {
+      alert('Google sign-in hatası: ' + err.message);
     }
+  });
 
-    function verileriKaydet() {
-      const veriler = { kitapSayisi: document.getElementById("kitapSayisi").value, dersler: {} };
-      dersler.forEach(ders => {
-        veriler.dersler[ders] = {
-          dogru: document.getElementById(`dogru_${ders}`).value,
-          yanlis: document.getElementById(`yanlis_${ders}`).value
-        };
-      });
-      localStorage.setItem("dersVerileri", JSON.stringify(veriler));
-      alert("Veriler kaydedildi!");
-    }
-
-    function verileriYukle() {
-      const kayitli = JSON.parse(localStorage.getItem("dersVerileri"));
-      if (!kayitli) return alert("Kayıtlı veri bulunamadı.");
-      document.getElementById("kitapSayisi").value = kayitli.kitapSayisi || 0;
-      dersler.forEach(ders => {
-        document.getElementById(`dogru_${ders}`).value = kayitli.dersler[ders]?.dogru || 0;
-        document.getElementById(`yanlis_${ders}`).value = kayitli.dersler[ders]?.yanlis || 0;
-      });
-      alert("Veriler yüklendi!");
-    }
-
-    function verileriTemizle() {
-      if (confirm("Tüm verileri silmek istediğine emin misin?")) {
-        localStorage.removeItem("dersVerileri");
-        tabloOlustur();
-        document.getElementById("kitapSayisi").value = 0;
+  // Email/Password sign-in (kayıt yoksa kayıt da yap)
+  btnEmailSign.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    const pw = passwordInput.value;
+    if(!email || !pw) return alert('Email ve parola girin');
+    try {
+      // önce sign-in dene
+      await signInWithEmailAndPassword(auth, email, pw);
+    } catch(e) {
+      // yoksa kayıt oluştur
+      if(e.code && (e.code.includes('user-not-found') || e.code.includes('wrong-password'))) {
+        try {
+          await createUserWithEmailAndPassword(auth, email, pw);
+        } catch(err2) {
+          alert('Kayıt hatası: '+ err2.message);
+        }
+      } else {
+        alert('Giriş hatası: '+e.message);
       }
     }
+  });
 
-    tabloOlustur();
-  </script>
+  // Sign-out
+  btnSignOut.addEventListener('click', () => signOut(auth));
+
+  // Oturum değişimlerini dinle
+  onAuthStateChanged(auth, async user => {
+    if(user) {
+      // göster
+      authArea.classList.add('hidden');
+      userArea.classList.remove('hidden');
+      userEmailSpan.textContent = user.email;
+      btnSignOut.classList.remove('hidden');
+
+      // Admin kontrolü: basit yöntem = Firestore 'admins' koleksiyonunda email var mı bak
+      const adminDoc = await getDoc(doc(db, 'admins', encodeURIComponent(user.email)));
+      const isAdmin = adminDoc.exists();
+      isAdminSpan.textContent = isAdmin ? 'Yönetici' : 'Kullanıcı';
+      if(isAdmin) adminActionBtn.classList.remove('hidden'); else adminActionBtn.classList.add('hidden');
+
+      // örnek: kullanıcıya ait verileri yükle istersen burada çağır
+      dbg.textContent = 'UID: ' + user.uid + '\\nEmail: ' + user.email;
+    } else {
+      // çıkış
+      authArea.classList.remove('hidden');
+      userArea.classList.add('hidden');
+      btnSignOut.classList.add('hidden');
+      dbg.textContent = '';
+    }
+  });
+
+  // --- Basit veri kaydet / yükle örneği (kişisel veriler)
+  document.getElementById('saveData').addEventListener('click', async () => {
+    const u = auth.currentUser;
+    if(!u) return alert('Önce giriş yapın');
+    const payload = { example:'örnek veri', timestamp: Date.now(), owner: u.uid };
+    // kaydetme: users/{uid}/data/mydata
+    await setDoc(doc(db, 'users', u.uid, 'data', 'mydata'), payload);
+    alert('Kaydedildi');
+  });
+
+  document.getElementById('loadData').addEventListener('click', async () => {
+    const u = auth.currentUser;
+    if(!u) return alert('Önce giriş yapın');
+    const snap = await getDoc(doc(db,'users', u.uid, 'data', 'mydata'));
+    if(!snap.exists()) return alert('Veri bulunamadı');
+    alert('Yüklendi: ' + JSON.stringify(snap.data()));
+  });
+
+  // Admin butonu örneği
+  adminActionBtn.addEventListener('click', ()=> alert('Admin işlemi (ör: diğer kullanıcıları görme)'));
+
+</script>
 </body>
 </html>
