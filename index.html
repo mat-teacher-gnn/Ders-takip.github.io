@@ -55,4 +55,83 @@
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzBe2pSZC_
+const API_URL = "https://script.google.com/macros/s/AKfycbzBe2pSZCf3Fak5xs-FPeW6r2vG4pdEmRKKI5Xo2QhKS44IU9WlLmI7sBmGhTs3w9_LkA/exec";
+let currentUser = null, isAdmin = false;
+
+// Şifre kontrolü
+async function login() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  document.getElementById("msg").textContent = "Kontrol ediliyor...";
+
+  try {
+    const res = await fetch(`${API_URL}?action=login&username=${username}&password=${password}`);
+    const data = await res.json();
+
+    if (data.success) {
+      currentUser = username;
+      isAdmin = data.role === "admin";
+      document.getElementById("login").style.display = "none";
+      document.getElementById("panel").style.display = "block";
+      document.getElementById("welcome").textContent = "Hoş geldin, " + username;
+      if (isAdmin) {
+        document.querySelector(".admin-only").style.display = "block";
+        loadStudents();
+      }
+    } else {
+      document.getElementById("msg").textContent = "Hatalı kullanıcı adı veya şifre!";
+    }
+  } catch(e) {
+    document.getElementById("msg").textContent = "Bağlantı hatası.";
+  }
+}
+
+// Veri kaydetme
+async function saveData() {
+  const values = {
+    username: currentUser,
+    turkce_d: getVal("turkce_d"), turkce_y: getVal("turkce_y"),
+    mat_d: getVal("mat_d"), mat_y: getVal("mat_y"),
+    sos_d: getVal("sos_d"), sos_y: getVal("sos_y"),
+    fen_d: getVal("fen_d"), fen_y: getVal("fen_y"),
+    din_d: getVal("din_d"), din_y: getVal("din_y"),
+    ing_d: getVal("ing_d"), ing_y: getVal("ing_y"),
+    kitap: getVal("kitap")
+  };
+  const query = new URLSearchParams({ action:"save", ...values });
+  const res = await fetch(`${API_URL}?${query}`);
+  const data = await res.json();
+  document.getElementById("saveMsg").textContent = data.message;
+}
+
+function getVal(id){ return document.getElementById(id).value || 0; }
+
+async function loadStudents() {
+  const res = await fetch(`${API_URL}?action=listUsers`);
+  const data = await res.json();
+  const sel = document.getElementById("ogrenciSec");
+  sel.innerHTML = data.users.map(u=>`<option>${u}</option>`).join("");
+}
+
+async function getStudentData() {
+  const name = document.getElementById("ogrenciSec").value;
+  const res = await fetch(`${API_URL}?action=getData&username=${name}`);
+  const data = await res.json();
+  if (!data.records.length) {
+    document.getElementById("dataTable").innerHTML = "Kayıt bulunamadı.";
+    return;
+  }
+  let html = "<table><tr><th>Tarih</th><th>Ders</th><th>Doğru</th><th>Yanlış</th><th>Kitap</th></tr>";
+  data.records.forEach(r=>{
+    html += `<tr><td>${r.date}</td><td>${r.ders}</td><td>${r.dogru}</td><td>${r.yanlis}</td><td>${r.kitap}</td></tr>`;
+  });
+  html += "</table>";
+  document.getElementById("dataTable").innerHTML = html;
+}
+
+function logout(){
+  location.reload();
+}
+</script>
+</body>
+</html>
