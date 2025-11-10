@@ -66,6 +66,10 @@ async function login() {
 
   try {
     const res = await fetch(`${API_URL}?action=login&username=${username}&password=${password}`);
+      method: "POST",
+      mode: "no-cors", // ekle
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
     const data = await res.json();
 
     if (data.success) {
