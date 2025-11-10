@@ -1,141 +1,75 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Öğrenci Takip Sistemi</title>
-<style>
-  body { font-family: Arial; background:#f5f5f5; margin:0; }
-  #login, #panel { max-width:700px; margin:auto; padding:20px; }
-  #panel { display:none; }
-  h1 { text-align:center; }
-  input, select, button { padding:6px; margin:4px; width:100%; }
-  table { width:100%; border-collapse:collapse; margin-top:15px; }
-  th, td { border:1px solid #ccc; padding:6px; text-align:center; }
-  .admin-only { display:none; background:#eef; padding:10px; margin-top:10px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Sheet Verileri Görüntüle</title>
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+      width: 90%;
+      max-width: 600px;
+      background: #1e1e1e;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 8px 12px;
+      text-align: left;
+    }
+    th {
+      background: #333;
+    }
+    button {
+      background: #4caf50;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background: #66bb6a;
+    }
+  </style>
 </head>
 <body>
+  <h2>Google Sheet'ten 3. Satır Verileri</h2>
+  <button id="getData">Verileri Getir</button>
+  <div id="output"></div>
 
-<div id="login">
-  <h1>Öğrenci Girişi</h1>
-  <input id="username" placeholder="Kullanıcı Adı">
-  <input id="password" type="password" placeholder="Şifre">
-  <button onclick="login()">Giriş Yap</button>
-  <p id="msg"></p>
-</div>
+  <script>
+    const apiUrl = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
 
-<div id="panel">
-  <h1 id="welcome"></h1>
+    document.getElementById("getData").addEventListener("click", async () => {
+      try {
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error("Bağlantı hatası");
+        const data = await res.json();
 
-  <div id="entryForm">
-    <h3>Veri Girişi</h3>
-    <table>
-      <tr><th>Ders</th><th>Doğru</th><th>Yanlış</th></tr>
-      <tr><td>Türkçe</td><td><input id="turkce_d"></td><td><input id="turkce_y"></td></tr>
-      <tr><td>Matematik</td><td><input id="mat_d"></td><td><input id="mat_y"></td></tr>
-      <tr><td>Sosyal</td><td><input id="sos_d"></td><td><input id="sos_y"></td></tr>
-      <tr><td>Fen</td><td><input id="fen_d"></td><td><input id="fen_y"></td></tr>
-      <tr><td>Din</td><td><input id="din_d"></td><td><input id="din_y"></td></tr>
-      <tr><td>İngilizce</td><td><input id="ing_d"></td><td><input id="ing_y"></td></tr>
-    </table>
-    <label>Okunan Kitap Sayısı: <input id="kitap" type="number" min="0"></label>
-    <button onclick="saveData()">Kaydet</button>
-    <p id="saveMsg"></p>
-  </div>
+        // Tabloyu oluştur
+        let html = "<table><tr><th>Alan</th><th>Değer</th></tr>";
+        for (const key in data) {
+          html += `<tr><td>${key}</td><td>${data[key]}</td></tr>`;
+        }
+        html += "</table>";
 
-  <div class="admin-only" id="adminPanel">
-    <h3>Yönetici Görünümü</h3>
-    <select id="ogrenciSec"></select>
-    <button onclick="getStudentData()">Verileri Getir</button>
-    <div id="dataTable"></div>
-  </div>
-
-  <button onclick="logout()">Çıkış</button>
-</div>
-
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbzBe2pSZCf3Fak5xs-FPeW6r2vG4pdEmRKKI5Xo2QhKS44IU9WlLmI7sBmGhTs3w9_LkA/exec";
-let currentUser = null, isAdmin = false;
-
-// Şifre kontrolü
-async function login() {
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-  document.getElementById("msg").textContent = "Kontrol ediliyor...";
-
-  try {
-    const res = await fetch(`${API_URL}?action=login&username=${username}&password=${password}`);
-      method: "POST",
-      mode: "no-cors", // ekle
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    const data = await res.json();
-
-    if (data.success) {
-      currentUser = username;
-      isAdmin = data.role === "admin";
-      document.getElementById("login").style.display = "none";
-      document.getElementById("panel").style.display = "block";
-      document.getElementById("welcome").textContent = "Hoş geldin, " + username;
-      if (isAdmin) {
-        document.querySelector(".admin-only").style.display = "block";
-        loadStudents();
+        document.getElementById("output").innerHTML = html;
+      } catch (err) {
+        document.getElementById("output").innerHTML = `<p style='color:red'>Hata: ${err.message}</p>`;
       }
-    } else {
-      document.getElementById("msg").textContent = "Hatalı kullanıcı adı veya şifre!";
-    }
-  } catch(e) {
-    document.getElementById("msg").textContent = "Bağlantı hatası.";
-  }
-}
-
-// Veri kaydetme
-async function saveData() {
-  const values = {
-    username: currentUser,
-    turkce_d: getVal("turkce_d"), turkce_y: getVal("turkce_y"),
-    mat_d: getVal("mat_d"), mat_y: getVal("mat_y"),
-    sos_d: getVal("sos_d"), sos_y: getVal("sos_y"),
-    fen_d: getVal("fen_d"), fen_y: getVal("fen_y"),
-    din_d: getVal("din_d"), din_y: getVal("din_y"),
-    ing_d: getVal("ing_d"), ing_y: getVal("ing_y"),
-    kitap: getVal("kitap")
-  };
-  const query = new URLSearchParams({ action:"save", ...values });
-  const res = await fetch(`${API_URL}?${query}`);
-  const data = await res.json();
-  document.getElementById("saveMsg").textContent = data.message;
-}
-
-function getVal(id){ return document.getElementById(id).value || 0; }
-
-async function loadStudents() {
-  const res = await fetch(`${API_URL}?action=listUsers`);
-  const data = await res.json();
-  const sel = document.getElementById("ogrenciSec");
-  sel.innerHTML = data.users.map(u=>`<option>${u}</option>`).join("");
-}
-
-async function getStudentData() {
-  const name = document.getElementById("ogrenciSec").value;
-  const res = await fetch(`${API_URL}?action=getData&username=${name}`);
-  const data = await res.json();
-  if (!data.records.length) {
-    document.getElementById("dataTable").innerHTML = "Kayıt bulunamadı.";
-    return;
-  }
-  let html = "<table><tr><th>Tarih</th><th>Ders</th><th>Doğru</th><th>Yanlış</th><th>Kitap</th></tr>";
-  data.records.forEach(r=>{
-    html += `<tr><td>${r.date}</td><td>${r.ders}</td><td>${r.dogru}</td><td>${r.yanlis}</td><td>${r.kitap}</td></tr>`;
-  });
-  html += "</table>";
-  document.getElementById("dataTable").innerHTML = html;
-}
-
-function logout(){
-  location.reload();
-}
-</script>
+    });
+  </script>
 </body>
 </html>
