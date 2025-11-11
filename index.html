@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Google Sheet Görüntüleme</title>
+  <title>Google Sheet Görüntüleme + Veri Girişi</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -48,15 +48,38 @@
       background: #222;
       color: #00c3ff;
     }
+    input {
+      width: 100%;
+      background: #222;
+      color: #fff;
+      border: none;
+      text-align: center;
+      padding: 6px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: #00c3ff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #fff;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #009cd1;
+    }
   </style>
 </head>
 <body>
-  <h1>📊 Google Sheets Görüntüleyici</h1>
+  <h1>📊 Google Sheets Görüntüleyici + Veri Ekleme</h1>
   <div id="tabs">Yükleniyor...</div>
   <table id="data-table"></table>
+  <button id="saveBtn" style="display:none;">💾 Kaydet</button>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
+    let currentSheet = "";
 
     async function getSheetNames() {
       const res = await fetch(API_URL + "?mode=sheets");
@@ -70,11 +93,15 @@
 
     function renderTable(data) {
       const table = document.getElementById("data-table");
+      const saveBtn = document.getElementById("saveBtn");
       table.innerHTML = "";
       if (!data || data.length === 0) {
         table.innerHTML = "<tr><td>Veri bulunamadı</td></tr>";
+        saveBtn.style.display = "none";
         return;
       }
+
+      // Başlık satırı
       const header = document.createElement("tr");
       data[0].forEach(h => {
         const th = document.createElement("th");
@@ -83,6 +110,7 @@
       });
       table.appendChild(header);
 
+      // Veri satırları
       for (let i = 1; i < data.length; i++) {
         const tr = document.createElement("tr");
         data[i].forEach(cell => {
@@ -92,6 +120,44 @@
         });
         table.appendChild(tr);
       }
+
+      // Boş giriş satırı
+      const inputRow = document.createElement("tr");
+      inputRow.id = "input-row";
+      data[0].forEach(() => {
+        const td = document.createElement("td");
+        const input = document.createElement("input");
+        td.appendChild(input);
+        inputRow.appendChild(td);
+      });
+      table.appendChild(inputRow);
+
+      saveBtn.style.display = "inline-block";
+    }
+
+    async function saveData() {
+      const inputs = document.querySelectorAll("#input-row input");
+      const values = Array.from(inputs).map(i => i.value.trim());
+      if (values.every(v => v === "")) {
+        alert("Lütfen veri girin.");
+        return;
+      }
+
+      const body = new URLSearchParams();
+      body.append("mode", "append");
+      body.append("sheet", currentSheet);
+      body.append("data", JSON.stringify(values));
+
+      const res = await fetch(API_URL, { method: "POST", body });
+      const result = await res.json();
+      alert(result.message || "Veri eklendi!");
+      loadSheet(currentSheet);
+    }
+
+    async function loadSheet(name) {
+      currentSheet = name;
+      const data = await getSheetData(name);
+      renderTable(data);
     }
 
     async function init() {
@@ -106,16 +172,13 @@
         tab.onclick = async () => {
           document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
           tab.classList.add("active");
-          const data = await getSheetData(name);
-          renderTable(data);
+          loadSheet(name);
         };
         tabsDiv.appendChild(tab);
       });
 
-      if (sheetNames.length > 0) {
-        const firstData = await getSheetData(sheetNames[0]);
-        renderTable(firstData);
-      }
+      if (sheetNames.length > 0) loadSheet(sheetNames[0]);
+      document.getElementById("saveBtn").onclick = saveData;
     }
 
     init().catch(err => {
