@@ -1,113 +1,127 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Sheet İlk Sekme Görüntüleyici</title>
-<style>
-  body{font-family:Arial;background:#fafafa;color:#222;margin:0;padding:20px}
-  h1{ text-align:center }
-  #box{ max-width:1100px;margin:14px auto;background:#fff;padding:14px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.07) }
-  table{width:100%;border-collapse:collapse;margin-top:12px}
-  th,td{border:1px solid #e0e0e0;padding:8px;text-align:left;font-size:14px}
-  th{background:#f2f2f2}
-  #status{margin-top:8px;color:#666}
-  #fetchBtn{background:#007bff;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
-  #fetchBtn[disabled]{opacity:.6;cursor:not-allowed}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Sheet Görüntüleme</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    h1 { margin: 20px 0; color: #00c3ff; }
+    #tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .tab {
+      background: #333;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #fff;
+      transition: 0.3s;
+    }
+    .tab:hover { background: #00c3ff; }
+    .active { background: #00c3ff; }
+    table {
+      border-collapse: collapse;
+      margin: auto;
+      width: 95%;
+      max-width: 900px;
+      background: #1e1e1e;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #444;
+    }
+    th {
+      background: #222;
+      color: #00c3ff;
+    }
+  </style>
 </head>
 <body>
-  <div id="box">
-    <h1>Google Sheet — İlk Sekme Görüntüleyici</h1>
-    <p>Butona basınca spreadsheet'in <strong>ilk sekmesi</strong> (sheet index 0) JSON olarak çekilip tabloyla gösterilecek.</p>
-    <div>
-      <label>API URL (Apps Script exec):</label>
-      <input id="apiUrl" style="width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid #ccc"
-             value="https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec">
-    </div>
-    <div style="margin-top:10px;display:flex;gap:8px">
-      <button id="fetchBtn">Verileri Getir</button>
-      <select id="rowSelector" style="width:220px;padding:8px;border-radius:6px;border:1px solid #ccc">
-        <option value="all">Tüm Satırları Göster</option>
-      </select>
-    </div>
+  <h1>📊 Google Sheets Görüntüleyici</h1>
+  <div id="tabs">Yükleniyor...</div>
+  <table id="data-table"></table>
 
-    <div id="status"></div>
-    <div id="out"></div>
-  </div>
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
 
-<script>
-const btn = document.getElementById('fetchBtn');
-const out = document.getElementById('out');
-const status = document.getElementById('status');
-const sel = document.getElementById('rowSelector');
+    async function getSheetNames() {
+      const res = await fetch(API_URL + "?mode=sheets");
+      return res.json();
+    }
 
-async function fetchSheet(){
-  const API_URL = document.getElementById('apiUrl').value.trim();
-  if(!API_URL){ status.textContent = 'API URL boş.'; return; }
-  btn.disabled = true; status.textContent = 'İstek gönderildi, bekleniyor...'; out.innerHTML = '';
-  try {
-    const res = await fetch(API_URL, { method:'GET' });
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const json = await res.json();
-    if(!json.success) throw new Error(json.message || 'Başarısız dönüş');
-    renderTable(json.headers, json.rows);
-    populateSelector(json.rows);
-    status.textContent = `Başarılı — ${json.rows.length} satır getirildi.`;
-  } catch (err) {
-    status.innerHTML = `<span style="color:red">Hata: ${err.message}</span><br>
-      <small>· Exec URL doğru mu? (exec, dev değil)<br>· Apps Script: Deploy -> Web app -> erişim \"Anyone\" seçili mi?</small>`;
-  } finally {
-    btn.disabled = false;
-  }
-}
+    async function getSheetData(sheetName) {
+      const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(sheetName));
+      return res.json();
+    }
 
-function renderTable(headers, rows){
-  if(!rows || rows.length === 0){
-    out.innerHTML = '<p>Satır bulunamadı.</p>';
-    return;
-  }
-  let html = '<table><thead><tr>';
-  headers.forEach(h => html += `<th>${escapeHtml(h)}</th>`);
-  html += '</tr></thead><tbody>';
-  rows.forEach((r, idx) => {
-    html += '<tr data-idx="'+idx+'">';
-    headers.forEach(h => html += `<td>${escapeHtml(String(r[h] === undefined ? '' : r[h]))}</td>`);
-    html += '</tr>';
-  });
-  html += '</tbody></table>';
-  out.innerHTML = html;
-}
+    function renderTable(data) {
+      const table = document.getElementById("data-table");
+      table.innerHTML = "";
+      if (!data || data.length === 0) {
+        table.innerHTML = "<tr><td>Veri bulunamadı</td></tr>";
+        return;
+      }
+      const header = document.createElement("tr");
+      data[0].forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        header.appendChild(th);
+      });
+      table.appendChild(header);
 
-function populateSelector(rows){
-  sel.innerHTML = '<option value="all">Tüm Satırları Göster</option>';
-  rows.forEach((r, i) => {
-    const label = (r[Object.keys(r)[0]] || 'Satır ' + (i+1));
-    const opt = document.createElement('option');
-    opt.value = i; opt.textContent = `${i+1} — ${label}`;
-    sel.appendChild(opt);
-  });
-}
+      for (let i = 1; i < data.length; i++) {
+        const tr = document.createElement("tr");
+        data[i].forEach(cell => {
+          const td = document.createElement("td");
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      }
+    }
 
-// seçici değiştiğinde yalnızca seçili satırı göster
-sel.addEventListener('change', ()=>{
-  const val = sel.value;
-  if(val === 'all') {
-    // yeniden fetch etmeden tablodaki tümünü göster (tablo zaten var)
-    [...document.querySelectorAll('tbody tr')].forEach(tr => tr.style.display = '');
-  } else {
-    [...document.querySelectorAll('tbody tr')].forEach((tr, i) => {
-      tr.style.display = (i == val) ? '' : 'none';
+    async function init() {
+      const tabsDiv = document.getElementById("tabs");
+      const sheetNames = await getSheetNames();
+
+      tabsDiv.innerHTML = "";
+      sheetNames.forEach((name, i) => {
+        const tab = document.createElement("div");
+        tab.textContent = name;
+        tab.className = "tab" + (i === 0 ? " active" : "");
+        tab.onclick = async () => {
+          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          const data = await getSheetData(name);
+          renderTable(data);
+        };
+        tabsDiv.appendChild(tab);
+      });
+
+      if (sheetNames.length > 0) {
+        const firstData = await getSheetData(sheetNames[0]);
+        renderTable(firstData);
+      }
+    }
+
+    init().catch(err => {
+      console.error(err);
+      document.getElementById("tabs").textContent = "Bağlantı hatası!";
     });
-  }
-});
-
-btn.addEventListener('click', fetchSheet);
-
-function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])); }
-
-// otomatik deneme: eğer exec URL inputta varsa otomatik çekme istersen uncomment:
-// window.addEventListener('load', fetchSheet);
-</script>
+  </script>
 </body>
 </html>
