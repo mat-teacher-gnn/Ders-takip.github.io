@@ -1,190 +1,235 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Google Sheet Görüntüleme + Veri Girişi</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #eee;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-    h1 { margin: 20px 0; color: #00c3ff; }
-    #tabs {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-    .tab {
-      background: #333;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      color: #fff;
-      transition: 0.3s;
-    }
-    .tab:hover { background: #00c3ff; }
-    .active { background: #00c3ff; }
-    table {
-      border-collapse: collapse;
-      margin: auto;
-      width: 95%;
-      max-width: 900px;
-      background: #1e1e1e;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    th, td {
-      padding: 8px 12px;
-      border: 1px solid #444;
-    }
-    th {
-      background: #222;
-      color: #00c3ff;
-    }
-    input {
-      width: 100%;
-      background: #222;
-      color: #fff;
-      border: none;
-      text-align: center;
-      padding: 6px;
-    }
-    button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      background: #00c3ff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      color: #fff;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #009cd1;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Öğrenci Takip - Hızlı Görüntüleyici</title>
+<style>
+  :root{--bg:#0f1720;--panel:#0b1220;--accent:#06b6d4;--muted:#9aa6b2}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#e6eef6}
+  header{padding:14px;text-align:center;background:linear-gradient(90deg,#021426, #042a3a)}
+  h1{margin:0;font-size:20px;color:var(--accent)}
+  #main{padding:18px;max-width:1100px;margin:20px auto}
+  #tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .tab{background:#071023;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid #092433}
+  .tab.active{background:var(--accent);color:#012327}
+  table{width:100%;border-collapse:collapse;background:#071022;border-radius:8px;overflow:hidden}
+  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:left}
+  th{background:#041623;color:var(--accent)}
+  .controls{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+  button{background:var(--accent);color:#012327;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+  /* Popup */
+  .overlay{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:50}
+  .popup{background:#071022;padding:20px;border-radius:10px;min-width:320px;border:1px solid #08334a}
+  .popup label{display:block;color:var(--muted);margin-top:8px}
+  .popup input{width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid #123}
+  .note{font-size:13px;color:var(--muted);margin-top:8px}
+  .hide{display:none}
+  #status{color:var(--muted);margin-top:8px}
+</style>
 </head>
 <body>
-  <h1>📊 Google Sheets Görüntüleyici + Veri Ekleme</h1>
-  <div id="tabs">Yükleniyor...</div>
-  <table id="data-table"></table>
-  <button id="saveBtn" style="display:none;">💾 Kaydet</button>
+<header><h1>Öğrenci Takip - Hızlı Görüntüleyici</h1></header>
+<div id="main">
+  <div class="controls">
+    <div id="tabs">Yükleniyor...</div>
+    <div style="margin-left:auto">
+      <button id="refreshBtn">Yenile</button>
+    </div>
+  </div>
+  <div id="tableWrap"><p id="status">Bir sayfa seçin veya popup ile isim girin.</p></div>
+</div>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
-    let currentSheet = "";
+<!-- popup -->
+<div id="overlay" class="overlay">
+  <div class="popup">
+    <h3>Giriş (isimle eşleşen sayfayı aç)</h3>
+    <label>İsim (sayfa adıyla aynı olacak)</label>
+    <input id="inpName" placeholder="Örn: Merve">
+    <label>Şifre (gizlenmeyecek)</label>
+    <input id="inpPass" placeholder="Şifre" type="text">
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button id="openBtn">Aç</button>
+      <button id="openAllBtn">Hoca olarak aç (tüm sayfalar)</button>
+    </div>
+    <div class="note">Not: Şifre görünür. Eğer <strong>Kullanıcı Bilgileri</strong> sayfasında rolü "hoca" yazılı olan bir kullanıcı girerse, tüm sayfaları görebileceksiniz.</div>
+    <div id="popupMsg" class="note"></div>
+  </div>
+</div>
 
-    async function getSheetNames() {
-      const res = await fetch(API_URL + "?mode=sheets");
-      return res.json();
-    }
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
 
-    async function getSheetData(sheetName) {
-      const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(sheetName));
-      return res.json();
-    }
+const overlay = document.getElementById('overlay');
+const openBtn = document.getElementById('openBtn');
+const openAllBtn = document.getElementById('openAllBtn');
+const popupMsg = document.getElementById('popupMsg');
+const tabsDiv = document.getElementById('tabs');
+const tableWrap = document.getElementById('tableWrap');
+const statusP = document.getElementById('status');
+const refreshBtn = document.getElementById('refreshBtn');
 
-    function renderTable(data) {
-      const table = document.getElementById("data-table");
-      const saveBtn = document.getElementById("saveBtn");
-      table.innerHTML = "";
-      if (!data || data.length === 0) {
-        table.innerHTML = "<tr><td>Veri bulunamadı</td></tr>";
-        saveBtn.style.display = "none";
-        return;
+let allSheets = []; // dizi: sheet isimleri
+
+// helper: fetch JSON with error handling
+async function fetchJson(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+// sayfa isimlerini al
+async function loadSheetNames(){
+  try {
+    const j = await fetchJson(API_URL + "?mode=sheets");
+    if(!j.success) throw new Error(j.message || 'sheet list error');
+    allSheets = j.sheets;
+    renderTabs(allSheets);
+  } catch (err) {
+    tabsDiv.innerHTML = "<span style='color:tomato'>Sheet isimleri alınamadı</span>";
+    statusP.textContent = "Hata: " + err.message;
+  }
+}
+
+function renderTabs(names){
+  tabsDiv.innerHTML = "";
+  names.forEach((n,i) => {
+    const d = document.createElement('div');
+    d.className = 'tab' + (i===0 ? ' active' : '');
+    d.textContent = n;
+    d.onclick = ()=> loadSheet(n);
+    tabsDiv.appendChild(d);
+  });
+  if(names.length) loadSheet(names[0]);
+}
+
+// seçili sheet'i çekip tablo render et
+async function loadSheet(name){
+  try {
+    statusP.textContent = 'Yükleniyor: ' + name;
+    const j = await fetchJson(API_URL + "?sheet=" + encodeURIComponent(name));
+    if(!j.success) { tableWrap.innerHTML = '<p>Veri boş</p>'; return; }
+    renderTable(j.data || j.rows || j); // API formatlarına göre esnek
+    statusP.textContent = 'Görüntülenen: ' + name;
+  } catch (err) {
+    tableWrap.innerHTML = '<p style="color:tomato">Yükleme hatası: ' + err.message + '</p>';
+    statusP.textContent = 'Hata';
+  }
+}
+
+// tablo render (data = matris: array of arrays)
+function renderTable(data){
+  if(!Array.isArray(data) || data.length === 0) { tableWrap.innerHTML = '<p>Veri yok</p>'; return; }
+  const headers = data[0];
+  let html = '<table><thead><tr>';
+  headers.forEach(h => html += `<th>${escapeHtml(h)}</th>`);
+  html += '</tr></thead><tbody>';
+  for(let i=1;i<data.length;i++){
+    html += '<tr>';
+    data[i].forEach(c => html += `<td>${escapeHtml(String(c===undefined? '' : c))}</td>`);
+    html += '</tr>';
+  }
+  // boş giriş satırı (inputs)
+  html += '<tr id="inputRow">';
+  headers.forEach((h,idx) => html += `<td><input data-col="${idx}" style="width:100%;background:#0b1a24;color:#fff;border:none;padding:6px"></td>`);
+  html += '</tr>';
+
+  html += '</tbody></table>';
+  html += '<div style="text-align:right;margin-top:8px"><button id="saveRowBtn">Satırı Kaydet</button></div>';
+  tableWrap.innerHTML = html;
+
+  document.getElementById('saveRowBtn').onclick = saveInputRow;
+}
+
+// input satırını kaydet ve current sheet'e append et
+async function saveInputRow(){
+  // hangi sheet aktif?
+  const activeTab = document.querySelector('.tab.active');
+  if(!activeTab) { alert('Aktif sayfa yok'); return; }
+  const sheetName = activeTab.textContent;
+  const inputs = [...document.querySelectorAll('#inputRow input')];
+  const values = inputs.map(i => i.value || '');
+  // POST append
+  try {
+    const form = new URLSearchParams();
+    form.append('mode','append');
+    form.append('sheet', sheetName);
+    form.append('data', JSON.stringify(values));
+    const res = await fetch(API_URL, { method:'POST', body: form });
+    const j = await res.json();
+    alert(j.message || 'Kaydedildi');
+    // yeniden yükle
+    loadSheet(sheetName);
+  } catch (err) {
+    alert('Kaydetme hatası: ' + err.message);
+  }
+}
+
+// popup: isim ile sheet açma (şifre kontrolü opsiyonel: Kullanıcı Bilgileri'nden kontrol)
+// eğer rol 'hoca' ise tüm sayfaları göster
+openBtn.onclick = async () => {
+  const name = document.getElementById('inpName').value.trim();
+  const pass = document.getElementById('inpPass').value.trim();
+  popupMsg.textContent = 'Kontrol ediliyor...';
+  try {
+    // Kullanıcı Bilgileri tablosunu çek
+    const j = await fetchJson(API_URL + "?mode=users");
+    if(!j.success) throw new Error(j.message || 'users load error');
+    const found = j.users.find(u => String(u["Kullanıcı Adı"] || u["Kullanici Adi"] || u["Kullanıcı"] || u.name) === name && String(u["Şifre"] || u.sifre || u.password) === pass);
+    if(found){
+      const role = String(found["Rol"] || found.role || found.roleName || "").toLowerCase();
+      popupMsg.textContent = 'Kullanıcı bulundu. Rol: ' + (role || 'yok');
+      if(role === 'hoca' || role === 'admin') {
+        // hoca ise tüm sayfaları göster
+        await loadSheetNamesAndShowAll();
+      } else {
+        // normal kullanıcı: açılan isimle aynı sayfayı göster (varsa)
+        overlay.classList.add('hide');
+        if(allSheets.includes(name)) loadSheet(name); else {
+          // sheet yoksa hata mesajı
+          alert('Aynı isimli sayfa bulunamadı: ' + name + '. Yine de ilk sayfa açılıyor.');
+          if(allSheets.length) loadSheet(allSheets[0]);
+        }
       }
-
-      // Başlık satırı
-      const header = document.createElement("tr");
-      data[0].forEach(h => {
-        const th = document.createElement("th");
-        th.textContent = h;
-        header.appendChild(th);
-      });
-      table.appendChild(header);
-
-      // Veri satırları
-      for (let i = 1; i < data.length; i++) {
-        const tr = document.createElement("tr");
-        data[i].forEach(cell => {
-          const td = document.createElement("td");
-          td.textContent = cell;
-          tr.appendChild(td);
-        });
-        table.appendChild(tr);
-      }
-
-      // Boş giriş satırı
-      const inputRow = document.createElement("tr");
-      inputRow.id = "input-row";
-      data[0].forEach(() => {
-        const td = document.createElement("td");
-        const input = document.createElement("input");
-        td.appendChild(input);
-        inputRow.appendChild(td);
-      });
-      table.appendChild(inputRow);
-
-      saveBtn.style.display = "inline-block";
+    } else {
+      popupMsg.textContent = 'Kullanıcı bulunamadı — yine de isimle eşleşen sayfayı açmaya çalışıyorum.';
+      overlay.classList.add('hide');
+      if(allSheets.includes(name)) loadSheet(name); else if(allSheets.length) loadSheet(allSheets[0]);
     }
+  } catch (err) {
+    popupMsg.textContent = 'Hata: ' + err.message + ' — isimle sayfa açılıyor.';
+    overlay.classList.add('hide');
+    if(allSheets.includes(name)) loadSheet(name); else if(allSheets.length) loadSheet(allSheets[0]);
+  }
+};
 
-    async function saveData() {
-      const inputs = document.querySelectorAll("#input-row input");
-      const values = Array.from(inputs).map(i => i.value.trim());
-      if (values.every(v => v === "")) {
-        alert("Lütfen veri girin.");
-        return;
-      }
+// direkt hoca butonu: popup'tan bağımsız -> admin görünümü (tüm sayfaları göster)
+openAllBtn.onclick = async () => {
+  try {
+    await loadSheetNamesAndShowAll();
+  } catch (err) {
+    popupMsg.textContent = 'Hata: ' + err.message;
+  }
+};
 
-      const body = new URLSearchParams();
-      body.append("mode", "append");
-      body.append("sheet", currentSheet);
-      body.append("data", JSON.stringify(values));
+async function loadSheetNamesAndShowAll(){
+  const j = await fetchJson(API_URL + "?mode=sheets");
+  if(!j.success) throw new Error(j.message || 'sheets load fail');
+  allSheets = j.sheets;
+  renderTabs(allSheets);
+  overlay.classList.add('hide');
+}
 
-      const res = await fetch(API_URL, { method: "POST", body });
-      const result = await res.json();
-      alert(result.message || "Veri eklendi!");
-      loadSheet(currentSheet);
-    }
+// refresh
+refreshBtn.onclick = ()=> loadSheetNames();
 
-    async function loadSheet(name) {
-      currentSheet = name;
-      const data = await getSheetData(name);
-      renderTable(data);
-    }
+// helpers
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])); }
 
-    async function init() {
-      const tabsDiv = document.getElementById("tabs");
-      const sheetNames = await getSheetNames();
-
-      tabsDiv.innerHTML = "";
-      sheetNames.forEach((name, i) => {
-        const tab = document.createElement("div");
-        tab.textContent = name;
-        tab.className = "tab" + (i === 0 ? " active" : "");
-        tab.onclick = async () => {
-          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-          tab.classList.add("active");
-          loadSheet(name);
-        };
-        tabsDiv.appendChild(tab);
-      });
-
-      if (sheetNames.length > 0) loadSheet(sheetNames[0]);
-      document.getElementById("saveBtn").onclick = saveData;
-    }
-
-    init().catch(err => {
-      console.error(err);
-      document.getElementById("tabs").textContent = "Bağlantı hatası!";
-    });
-  </script>
+// init
+(async ()=> {
+  await loadSheetNames();
+})();
+</script>
 </body>
 </html>
