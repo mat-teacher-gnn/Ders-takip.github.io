@@ -1,75 +1,113 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Google Sheet Verileri Görüntüle</title>
-  <style>
-    body {
-      background: #121212;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
-    table {
-      border-collapse: collapse;
-      margin-top: 20px;
-      width: 90%;
-      max-width: 600px;
-      background: #1e1e1e;
-    }
-    th, td {
-      border: 1px solid #444;
-      padding: 8px 12px;
-      text-align: left;
-    }
-    th {
-      background: #333;
-    }
-    button {
-      background: #4caf50;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-    button:hover {
-      background: #66bb6a;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sheet İlk Sekme Görüntüleyici</title>
+<style>
+  body{font-family:Arial;background:#fafafa;color:#222;margin:0;padding:20px}
+  h1{ text-align:center }
+  #box{ max-width:1100px;margin:14px auto;background:#fff;padding:14px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.07) }
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{border:1px solid #e0e0e0;padding:8px;text-align:left;font-size:14px}
+  th{background:#f2f2f2}
+  #status{margin-top:8px;color:#666}
+  #fetchBtn{background:#007bff;color:#fff;border:none;padding:10px 14px;border-radius:6px;cursor:pointer}
+  #fetchBtn[disabled]{opacity:.6;cursor:not-allowed}
+</style>
 </head>
 <body>
-  <h2>Google Sheet'ten 3. Satır Verileri</h2>
-  <button id="getData">Verileri Getir</button>
-  <div id="output"></div>
+  <div id="box">
+    <h1>Google Sheet — İlk Sekme Görüntüleyici</h1>
+    <p>Butona basınca spreadsheet'in <strong>ilk sekmesi</strong> (sheet index 0) JSON olarak çekilip tabloyla gösterilecek.</p>
+    <div>
+      <label>API URL (Apps Script exec):</label>
+      <input id="apiUrl" style="width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid #ccc"
+             value="https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec">
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button id="fetchBtn">Verileri Getir</button>
+      <select id="rowSelector" style="width:220px;padding:8px;border-radius:6px;border:1px solid #ccc">
+        <option value="all">Tüm Satırları Göster</option>
+      </select>
+    </div>
 
-  <script>
-    const apiUrl = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
+    <div id="status"></div>
+    <div id="out"></div>
+  </div>
 
-    document.getElementById("getData").addEventListener("click", async () => {
-      try {
-        const res = await fetch(apiUrl);
-        if (!res.ok) throw new Error("Bağlantı hatası");
-        const data = await res.json();
+<script>
+const btn = document.getElementById('fetchBtn');
+const out = document.getElementById('out');
+const status = document.getElementById('status');
+const sel = document.getElementById('rowSelector');
 
-        // Tabloyu oluştur
-        let html = "<table><tr><th>Alan</th><th>Değer</th></tr>";
-        for (const key in data) {
-          html += `<tr><td>${key}</td><td>${data[key]}</td></tr>`;
-        }
-        html += "</table>";
+async function fetchSheet(){
+  const API_URL = document.getElementById('apiUrl').value.trim();
+  if(!API_URL){ status.textContent = 'API URL boş.'; return; }
+  btn.disabled = true; status.textContent = 'İstek gönderildi, bekleniyor...'; out.innerHTML = '';
+  try {
+    const res = await fetch(API_URL, { method:'GET' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if(!json.success) throw new Error(json.message || 'Başarısız dönüş');
+    renderTable(json.headers, json.rows);
+    populateSelector(json.rows);
+    status.textContent = `Başarılı — ${json.rows.length} satır getirildi.`;
+  } catch (err) {
+    status.innerHTML = `<span style="color:red">Hata: ${err.message}</span><br>
+      <small>· Exec URL doğru mu? (exec, dev değil)<br>· Apps Script: Deploy -> Web app -> erişim \"Anyone\" seçili mi?</small>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
 
-        document.getElementById("output").innerHTML = html;
-      } catch (err) {
-        document.getElementById("output").innerHTML = `<p style='color:red'>Hata: ${err.message}</p>`;
-      }
+function renderTable(headers, rows){
+  if(!rows || rows.length === 0){
+    out.innerHTML = '<p>Satır bulunamadı.</p>';
+    return;
+  }
+  let html = '<table><thead><tr>';
+  headers.forEach(h => html += `<th>${escapeHtml(h)}</th>`);
+  html += '</tr></thead><tbody>';
+  rows.forEach((r, idx) => {
+    html += '<tr data-idx="'+idx+'">';
+    headers.forEach(h => html += `<td>${escapeHtml(String(r[h] === undefined ? '' : r[h]))}</td>`);
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  out.innerHTML = html;
+}
+
+function populateSelector(rows){
+  sel.innerHTML = '<option value="all">Tüm Satırları Göster</option>';
+  rows.forEach((r, i) => {
+    const label = (r[Object.keys(r)[0]] || 'Satır ' + (i+1));
+    const opt = document.createElement('option');
+    opt.value = i; opt.textContent = `${i+1} — ${label}`;
+    sel.appendChild(opt);
+  });
+}
+
+// seçici değiştiğinde yalnızca seçili satırı göster
+sel.addEventListener('change', ()=>{
+  const val = sel.value;
+  if(val === 'all') {
+    // yeniden fetch etmeden tablodaki tümünü göster (tablo zaten var)
+    [...document.querySelectorAll('tbody tr')].forEach(tr => tr.style.display = '');
+  } else {
+    [...document.querySelectorAll('tbody tr')].forEach((tr, i) => {
+      tr.style.display = (i == val) ? '' : 'none';
     });
-  </script>
+  }
+});
+
+btn.addEventListener('click', fetchSheet);
+
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])); }
+
+// otomatik deneme: eğer exec URL inputta varsa otomatik çekme istersen uncomment:
+// window.addEventListener('load', fetchSheet);
+</script>
 </body>
 </html>
