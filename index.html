@@ -3,23 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Google Sheet Görüntüleme + Veri Girişi</title>
+  <title>Öğrenci Takip Sistemi</title>
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
       background: #121212;
       color: #eee;
-      margin: 0;
-      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #login, #main {
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+    h1 {
+      color: #00c3ff;
+    }
+    input {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 8px;
+      font-size: 16px;
       text-align: center;
     }
-    h1 { margin: 20px 0; color: #00c3ff; }
+    button {
+      padding: 10px 20px;
+      background: #00c3ff;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #009cd1;
+    }
     #tabs {
       display: flex;
       justify-content: center;
       gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 10px;
+      margin: 10px;
     }
     .tab {
       background: #333;
@@ -27,110 +65,178 @@
       border-radius: 8px;
       cursor: pointer;
       color: #fff;
-      transition: 0.3s;
     }
-    .tab:hover { background: #00c3ff; }
-    .active { background: #00c3ff; }
+    .active {
+      background: #00c3ff;
+    }
     table {
       border-collapse: collapse;
-      margin: auto;
       width: 95%;
-      max-width: 900px;
+      margin: auto;
       background: #1e1e1e;
+      color: #eee;
       border-radius: 10px;
-      overflow: hidden;
     }
     th, td {
-      padding: 8px 12px;
       border: 1px solid #444;
+      padding: 8px 10px;
     }
     th {
       background: #222;
       color: #00c3ff;
     }
-    input {
+    input.table-input {
       width: 100%;
       background: #222;
       color: #fff;
       border: none;
       text-align: center;
-      padding: 6px;
     }
-    button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      background: #00c3ff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      color: #fff;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #009cd1;
+    #saveBtn {
+      margin: 15px;
     }
   </style>
 </head>
 <body>
-  <h1>📊 Google Sheets Görüntüleyici + Veri Ekleme</h1>
-  <div id="tabs">Yükleniyor...</div>
-  <table id="data-table"></table>
-  <button id="saveBtn" style="display:none;">💾 Kaydet</button>
+  <div id="login">
+    <h1>🔐 Giriş Yap</h1>
+    <input id="username" type="text" placeholder="Kullanıcı Adı" />
+    <input id="password" type="text" placeholder="Şifre (karakterler görünecek)" />
+    <button id="loginBtn">Giriş</button>
+    <p id="loginMessage" style="color:#ff7777"></p>
+  </div>
+
+  <div id="main" style="display:none;">
+    <h1>📊 Öğrenci Takip Sistemi</h1>
+    <div id="tabs"></div>
+    <table id="data-table"></table>
+    <button id="saveBtn" style="display:none;">💾 Kaydet</button>
+  </div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
     let currentSheet = "";
+    let userRole = "ogrenci";
 
-    async function getSheetNames() {
-      const res = await fetch(API_URL + "?mode=sheets");
+    async function fetchSheet(sheetName) {
+      const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(sheetName));
       return res.json();
     }
 
-    async function getSheetData(sheetName) {
-      const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(sheetName));
-      return res.json();
+    async function renderLogin() {
+      document.getElementById("loginBtn").onclick = async () => {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
+
+        if (!username || !password) {
+          document.getElementById("loginMessage").textContent = "Lütfen kullanıcı adı ve şifre girin.";
+          return;
+        }
+
+        // Kullanıcı Bilgileri sayfasından şifre kontrolü
+        const userSheet = await fetchSheet("Kullanıcı Bilgileri");
+        const header = userSheet[0];
+        const nameIndex = header.indexOf("Kullanıcı Adı");
+        const passIndex = header.indexOf("Şifre");
+        const roleIndex = header.indexOf("Rol"); // varsa "hoca" yazan sütun
+
+        let found = false;
+        for (let i = 1; i < userSheet.length; i++) {
+          const row = userSheet[i];
+          if (row[nameIndex] == username && row[passIndex] == password) {
+            found = true;
+            userRole = row[roleIndex] && row[roleIndex].toLowerCase() === "hoca" ? "hoca" : "ogrenci";
+            break;
+          }
+        }
+
+        if (!found) {
+          document.getElementById("loginMessage").textContent = "Kullanıcı adı veya şifre hatalı.";
+          return;
+        }
+
+        document.getElementById("login").style.display = "none";
+        document.getElementById("main").style.display = "block";
+
+        if (userRole === "hoca") {
+          loadAllSheets();
+        } else {
+          loadSheet(username);
+        }
+      };
+    }
+
+    async function loadAllSheets() {
+      const res = await fetch(API_URL + "?mode=sheets");
+      const sheetNames = await res.json();
+      renderTabs(sheetNames);
+      loadSheet(sheetNames[0]);
+    }
+
+    function renderTabs(names) {
+      const tabs = document.getElementById("tabs");
+      tabs.innerHTML = "";
+      names.forEach((n, i) => {
+        const div = document.createElement("div");
+        div.textContent = n;
+        div.className = "tab" + (i === 0 ? " active" : "");
+        div.onclick = () => {
+          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+          div.classList.add("active");
+          loadSheet(n);
+        };
+        tabs.appendChild(div);
+      });
+    }
+
+    async function loadSheet(name) {
+      currentSheet = name;
+      const data = await fetchSheet(name);
+      renderTable(data);
     }
 
     function renderTable(data) {
       const table = document.getElementById("data-table");
       const saveBtn = document.getElementById("saveBtn");
       table.innerHTML = "";
+
       if (!data || data.length === 0) {
-        table.innerHTML = "<tr><td>Veri bulunamadı</td></tr>";
+        table.innerHTML = "<tr><td>Veri yok</td></tr>";
         saveBtn.style.display = "none";
         return;
       }
 
       // Başlık satırı
-      const header = document.createElement("tr");
+      const headerRow = document.createElement("tr");
       data[0].forEach(h => {
         const th = document.createElement("th");
         th.textContent = h;
-        header.appendChild(th);
+        headerRow.appendChild(th);
       });
-      table.appendChild(header);
+      table.appendChild(headerRow);
 
       // Veri satırları
       for (let i = 1; i < data.length; i++) {
         const tr = document.createElement("tr");
-        data[i].forEach(cell => {
+        data[i].forEach(c => {
           const td = document.createElement("td");
-          td.textContent = cell;
+          td.textContent = c;
           tr.appendChild(td);
         });
         table.appendChild(tr);
       }
 
-      // Boş giriş satırı
-      const inputRow = document.createElement("tr");
-      inputRow.id = "input-row";
+      // Boş satır (giriş için)
+      const tr = document.createElement("tr");
+      tr.id = "input-row";
       data[0].forEach(() => {
         const td = document.createElement("td");
         const input = document.createElement("input");
+        input.className = "table-input";
         td.appendChild(input);
-        inputRow.appendChild(td);
+        tr.appendChild(td);
       });
-      table.appendChild(inputRow);
+      table.appendChild(tr);
 
       saveBtn.style.display = "inline-block";
     }
@@ -154,37 +260,8 @@
       loadSheet(currentSheet);
     }
 
-    async function loadSheet(name) {
-      currentSheet = name;
-      const data = await getSheetData(name);
-      renderTable(data);
-    }
-
-    async function init() {
-      const tabsDiv = document.getElementById("tabs");
-      const sheetNames = await getSheetNames();
-
-      tabsDiv.innerHTML = "";
-      sheetNames.forEach((name, i) => {
-        const tab = document.createElement("div");
-        tab.textContent = name;
-        tab.className = "tab" + (i === 0 ? " active" : "");
-        tab.onclick = async () => {
-          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-          tab.classList.add("active");
-          loadSheet(name);
-        };
-        tabsDiv.appendChild(tab);
-      });
-
-      if (sheetNames.length > 0) loadSheet(sheetNames[0]);
-      document.getElementById("saveBtn").onclick = saveData;
-    }
-
-    init().catch(err => {
-      console.error(err);
-      document.getElementById("tabs").textContent = "Bağlantı hatası!";
-    });
+    document.getElementById("saveBtn").onclick = saveData;
+    renderLogin();
   </script>
 </body>
 </html>
