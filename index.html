@@ -1,267 +1,348 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Öğrenci Takip Sistemi</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #121212;
-      color: #eee;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    #login, #main {
-      background: #1e1e1e;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.4);
-      text-align: center;
-      width: 90%;
-      max-width: 400px;
-    }
-    h1 {
-      color: #00c3ff;
-    }
-    input {
-      width: 100%;
-      margin: 10px 0;
-      padding: 10px;
-      background: #222;
-      color: #fff;
-      border: 1px solid #555;
-      border-radius: 8px;
-      font-size: 16px;
-      text-align: center;
-    }
-    button {
-      padding: 10px 20px;
-      background: #00c3ff;
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover {
-      background: #009cd1;
-    }
-    #tabs {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 10px;
-    }
-    .tab {
-      background: #333;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      color: #fff;
-    }
-    .active {
-      background: #00c3ff;
-    }
-    table {
-      border-collapse: collapse;
-      width: 95%;
-      margin: auto;
-      background: #1e1e1e;
-      color: #eee;
-      border-radius: 10px;
-    }
-    th, td {
-      border: 1px solid #444;
-      padding: 8px 10px;
-    }
-    th {
-      background: #222;
-      color: #00c3ff;
-    }
-    input.table-input {
-      width: 100%;
-      background: #222;
-      color: #fff;
-      border: none;
-      text-align: center;
-    }
-    #saveBtn {
-      margin: 15px;
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Öğrenci Takip - Gelişmiş Giriş</title>
+<style>
+  body{font-family:Arial, Helvetica, sans-serif;background:#121212;color:#eee;margin:0;display:flex;align-items:center;justify-content:center;height:100vh}
+  .card{width:95%;max-width:760px;background:#1e1e1e;padding:18px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.6)}
+  h1{color:#00c3ff;margin:0 0 12px 0;text-align:center}
+  .row{display:flex;gap:8px;margin-bottom:8px}
+  input[type=text]{flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#222;color:#fff;font-size:15px;text-align:center}
+  button{padding:10px 14px;border-radius:8px;border:none;background:#00c3ff;color:#041;cursor:pointer;font-weight:600}
+  #loginMessage{color:#ffb3b3;margin-top:8px;text-align:center}
+  #main{display:none;margin-top:12px}
+  #tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+  .tab{background:#333;padding:8px 12px;border-radius:8px;cursor:pointer}
+  .active{background:#00c3ff;color:#001}
+  table{width:100%;border-collapse:collapse;margin:auto;background:#111;border-radius:8px;overflow:hidden}
+  th,td{padding:8px;border:1px solid #222;text-align:center}
+  th{background:#0b2540;color:#fff}
+  input.table-input{width:100%;padding:6px;background:#222;border:none;color:#fff;text-align:center}
+  #saveBtn{margin-top:10px;background:#29a329}
+  #status{margin-top:8px;color:#bbb;font-size:13px;text-align:center}
+</style>
 </head>
 <body>
-  <div id="login">
-    <h1>🔐 Giriş Yap</h1>
-    <input id="username" type="text" placeholder="Kullanıcı Adı" />
-    <input id="password" type="text" placeholder="Şifre (karakterler görünecek)" />
-    <button id="loginBtn">Giriş</button>
-    <p id="loginMessage" style="color:#ff7777"></p>
+  <div class="card">
+    <h1>🔐 Öğrenci Takip — Giriş</h1>
+
+    <div id="loginBox">
+      <div class="row">
+        <input id="username" type="text" placeholder="Kullanıcı adı (ör: Merve)"/>
+        <input id="password" type="text" placeholder="Şifre (karakterler görünecek)"/>
+        <button id="loginBtn">Giriş</button>
+      </div>
+      <div id="loginMessage"></div>
+    </div>
+
+    <div id="main">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div id="welcome" style="font-weight:700"></div>
+        <div><button id="logoutBtn">Çıkış</button></div>
+      </div>
+
+      <div id="tabs" style="margin-top:12px">Yükleniyor...</div>
+
+      <div id="tableWrap">
+        <table id="dataTable"></table>
+        <div style="text-align:center">
+          <button id="saveBtn" style="display:none">💾 Kaydet</button>
+        </div>
+      </div>
+
+      <div id="status"></div>
+    </div>
   </div>
 
-  <div id="main" style="display:none;">
-    <h1>📊 Öğrenci Takip Sistemi</h1>
-    <div id="tabs"></div>
-    <table id="data-table"></table>
-    <button id="saveBtn" style="display:none;">💾 Kaydet</button>
-  </div>
+<script>
+/*
+  Güçlendirilmiş giriş/yükleme scripti
+  - API_URL: senin Apps Script exec URL'in
+  - Giriş: "Kullanıcı Bilgileri" sekmesini çekip başlıklardan esnek eşleme ile doğrulama yapar.
+  - Rol hücresinde "hoca" (veya "teacher") yazarsa yönetici görünümü açılır.
+*/
+const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
-    let currentSheet = "";
-    let userRole = "ogrenci";
+const loginBtn = document.getElementById('loginBtn');
+const loginMsg = document.getElementById('loginMessage');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
 
-    async function fetchSheet(sheetName) {
-      const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(sheetName));
-      return res.json();
+const mainDiv = document.getElementById('main');
+const tabsDiv = document.getElementById('tabs');
+const dataTable = document.getElementById('dataTable');
+const saveBtn = document.getElementById('saveBtn');
+const statusDiv = document.getElementById('status');
+const welcomeDiv = document.getElementById('welcome');
+const logoutBtn = document.getElementById('logoutBtn');
+
+let currentUser = "";
+let currentRole = "ogrenci";
+let currentSheet = "";
+
+// yardımcı: API'den sheet verisini al (sheet param belirtilirse o sayfayı döner)
+async function fetchSheet(sheetName){
+  const url = API_URL + (sheetName ? ("?sheet=" + encodeURIComponent(sheetName)) : "");
+  const res = await fetch(url, {method:'GET'});
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const json = await res.json();
+  // json ya 2D array ya {headers, rows} veya hata mesajı olabilir
+  return json;
+}
+
+// yardımcı: esnek başlık-eşleme
+function headerIndex(headers, candidates){
+  if(!headers) return -1;
+  const low = headers.map(h => String(h||"").trim().toLowerCase());
+  for(const cand of candidates){
+    const idx = low.indexOf(cand.toLowerCase());
+    if(idx >= 0) return idx;
+  }
+  return -1;
+}
+
+// giriş mantığı
+loginBtn.addEventListener('click', async ()=>{
+  loginMsg.textContent = "";
+  statusDiv.textContent = "";
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
+  if(!username || !password){
+    loginMsg.textContent = "Kullanıcı adı ve şifre gerekli.";
+    return;
+  }
+
+  loginBtn.disabled = true;
+  loginMsg.textContent = "Kontrol ediliyor...";
+
+  try {
+    const data = await fetchSheet("Kullanıcı Bilgileri");
+
+    // data 2D array veya {success, headers, rows}
+    let headers = null, rows = null;
+    if(Array.isArray(data)){
+      headers = data[0] || [];
+      rows = data.slice(1);
+    } else if (data && data.headers && data.rows){
+      headers = data.headers;
+      rows = data.rows;
+    } else {
+      throw new Error("Kullanıcı Bilgileri okunamadı (beklenmeyen format).");
     }
 
-    async function renderLogin() {
-      document.getElementById("loginBtn").onclick = async () => {
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value.trim();
+    // başlık indekslerini esnek al
+    const nameIdx = headerIndex(headers, ["kullanıcı adı","kullanici adi","kullanici adı","username","user","isim","ad"]);
+    const passIdx = headerIndex(headers, ["şifre","sifre","password","pass"]);
+    const roleIdx = headerIndex(headers, ["rol","role","yetki","type","tip"]);
 
-        if (!username || !password) {
-          document.getElementById("loginMessage").textContent = "Lütfen kullanıcı adı ve şifre girin.";
-          return;
-        }
-
-        // Kullanıcı Bilgileri sayfasından şifre kontrolü
-        const userSheet = await fetchSheet("Kullanıcı Bilgileri");
-        const header = userSheet[0];
-        const nameIndex = header.indexOf("Kullanıcı Adı");
-        const passIndex = header.indexOf("Şifre");
-        const roleIndex = header.indexOf("Rol"); // varsa "hoca" yazan sütun
-
-        let found = false;
-        for (let i = 1; i < userSheet.length; i++) {
-          const row = userSheet[i];
-          if (row[nameIndex] == username && row[passIndex] == password) {
-            found = true;
-            userRole = row[roleIndex] && row[roleIndex].toLowerCase() === "hoca" ? "hoca" : "ogrenci";
-            break;
-          }
-        }
-
-        if (!found) {
-          document.getElementById("loginMessage").textContent = "Kullanıcı adı veya şifre hatalı.";
-          return;
-        }
-
-        document.getElementById("login").style.display = "none";
-        document.getElementById("main").style.display = "block";
-
-        if (userRole === "hoca") {
-          loadAllSheets();
-        } else {
-          loadSheet(username);
-        }
-      };
+    if(nameIdx === -1 || passIdx === -1){
+      throw new Error("Kullanıcı Bilgileri sayfasında 'Kullanıcı Adı' veya 'Şifre' sütunu bulunamadı.");
     }
 
-    async function loadAllSheets() {
-      const res = await fetch(API_URL + "?mode=sheets");
-      const sheetNames = await res.json();
-      renderTabs(sheetNames);
-      loadSheet(sheetNames[0]);
-    }
-
-    function renderTabs(names) {
-      const tabs = document.getElementById("tabs");
-      tabs.innerHTML = "";
-      names.forEach((n, i) => {
-        const div = document.createElement("div");
-        div.textContent = n;
-        div.className = "tab" + (i === 0 ? " active" : "");
-        div.onclick = () => {
-          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-          div.classList.add("active");
-          loadSheet(n);
-        };
-        tabs.appendChild(div);
-      });
-    }
-
-    async function loadSheet(name) {
-      currentSheet = name;
-      const data = await fetchSheet(name);
-      renderTable(data);
-    }
-
-    function renderTable(data) {
-      const table = document.getElementById("data-table");
-      const saveBtn = document.getElementById("saveBtn");
-      table.innerHTML = "";
-
-      if (!data || data.length === 0) {
-        table.innerHTML = "<tr><td>Veri yok</td></tr>";
-        saveBtn.style.display = "none";
-        return;
+    // kullanıcıyı ara
+    let found = false;
+    for(const r of rows){
+      const n = String(r[nameIdx] || "").trim();
+      const p = String(r[passIdx] || "").trim();
+      if(n === username && p === password){
+        found = true;
+        // rolü tespit et
+        let roleVal = roleIdx !== -1 ? String(r[roleIdx]||"").trim().toLowerCase() : "";
+        if(roleVal === "hoca" || roleVal === "teacher" || roleVal === "admin") currentRole = "hoca";
+        else currentRole = "ogrenci";
+        break;
       }
-
-      // Başlık satırı
-      const headerRow = document.createElement("tr");
-      data[0].forEach(h => {
-        const th = document.createElement("th");
-        th.textContent = h;
-        headerRow.appendChild(th);
-      });
-      table.appendChild(headerRow);
-
-      // Veri satırları
-      for (let i = 1; i < data.length; i++) {
-        const tr = document.createElement("tr");
-        data[i].forEach(c => {
-          const td = document.createElement("td");
-          td.textContent = c;
-          tr.appendChild(td);
-        });
-        table.appendChild(tr);
-      }
-
-      // Boş satır (giriş için)
-      const tr = document.createElement("tr");
-      tr.id = "input-row";
-      data[0].forEach(() => {
-        const td = document.createElement("td");
-        const input = document.createElement("input");
-        input.className = "table-input";
-        td.appendChild(input);
-        tr.appendChild(td);
-      });
-      table.appendChild(tr);
-
-      saveBtn.style.display = "inline-block";
     }
 
-    async function saveData() {
-      const inputs = document.querySelectorAll("#input-row input");
-      const values = Array.from(inputs).map(i => i.value.trim());
-      if (values.every(v => v === "")) {
-        alert("Lütfen veri girin.");
-        return;
-      }
-
-      const body = new URLSearchParams();
-      body.append("mode", "append");
-      body.append("sheet", currentSheet);
-      body.append("data", JSON.stringify(values));
-
-      const res = await fetch(API_URL, { method: "POST", body });
-      const result = await res.json();
-      alert(result.message || "Veri eklendi!");
-      loadSheet(currentSheet);
+    if(!found){
+      loginMsg.textContent = "Kullanıcı adı veya şifre hatalı.";
+      loginBtn.disabled = false;
+      return;
     }
 
-    document.getElementById("saveBtn").onclick = saveData;
-    renderLogin();
-  </script>
+    // başarılı
+    currentUser = username;
+    welcomeDiv.textContent = `${currentUser} — (${currentRole === 'hoca' ? 'Hoca' : 'Öğrenci'})`;
+    document.getElementById('loginBox').style.display = 'none';
+    mainDiv.style.display = 'block';
+
+    if(currentRole === 'hoca'){
+      await loadAllTabs();
+    } else {
+      await loadSingleTab(currentUser);
+    }
+
+  } catch (err) {
+    loginMsg.textContent = "Hata: " + err.message;
+    console.error(err);
+  } finally {
+    loginBtn.disabled = false;
+  }
+});
+
+// Tüm sekmeleri getir ve göster (hoca)
+async function loadAllTabs(){
+  try {
+    statusDiv.textContent = "Sekmeler yükleniyor...";
+    const res = await fetch(API_URL + "?mode=sheets");
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const names = await res.json();
+    if(!Array.isArray(names)) throw new Error('Sekme listesi alınamadı');
+    renderTabs(names);
+    if(names.length) await loadSheet(names[0]);
+    statusDiv.textContent = "";
+  } catch (err){
+    statusDiv.textContent = "Hata: " + err.message;
+    console.error(err);
+  }
+}
+
+// Sadece kendi sekmesini aç (öğrenci)
+async function loadSingleTab(name){
+  try {
+    statusDiv.textContent = "Sayfa yükleniyor...";
+    // önce sekme var mı kontrol et
+    const res = await fetch(API_URL + "?mode=sheets");
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const names = await res.json();
+    const found = names && names.includes(name);
+    if(!found) {
+      // eğer yoksa doğrudan aynı ada yeni sekme olmasını bekleyebiliriz, ama önce gösterelim hata mesajı
+      statusDiv.textContent = `Kullanıcı adına uygun sayfa bulunamadı: "${name}"`;
+      renderTabs([]); // boş
+      return;
+    }
+    renderTabs([name]);
+    await loadSheet(name);
+    statusDiv.textContent = "";
+  } catch (err){
+    statusDiv.textContent = "Hata: " + err.message;
+    console.error(err);
+  }
+}
+
+function renderTabs(names){
+  tabsDiv.innerHTML = "";
+  names.forEach((n, idx) => {
+    const d = document.createElement('div');
+    d.className = 'tab' + (idx===0? ' active':'');
+    d.textContent = n;
+    d.onclick = async ()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      d.classList.add('active');
+      await loadSheet(n);
+    };
+    tabsDiv.appendChild(d);
+  });
+}
+
+// belirli bir sheet'i çek ve tabloya render et
+async function loadSheet(sheetName){
+  try {
+    currentSheet = sheetName;
+    statusDiv.textContent = `Yükleniyor: ${sheetName} ...`;
+    const payload = await fetchSheet(sheetName);
+    // payload array mi yoksa object mi?
+    let data = null;
+    if(Array.isArray(payload)) data = payload;
+    else if(payload && payload.success === false && payload.message) throw new Error(payload.message);
+    else if(payload && payload.length === 0) data = payload;
+    else if(payload && payload.headers && payload.rows) {
+      // dönmüş format: convert to 2D array
+      data = [payload.headers].concat(payload.rows.map(r => payload.headers.map(h=> r[h]===undefined? "": r[h])));
+    } else {
+      // fallback: maybe it's JSON 2D already
+      data = payload;
+    }
+
+    renderTableFrom2D(data);
+    statusDiv.textContent = "";
+  } catch (err){
+    statusDiv.textContent = "Hata: " + err.message;
+    console.error(err);
+  }
+}
+
+// render a 2D array into table with input row at bottom
+function renderTableFrom2D(data2d){
+  dataTable.innerHTML = "";
+  if(!data2d || data2d.length === 0){
+    dataTable.innerHTML = "<tr><td>Veri yok</td></tr>";
+    saveBtn.style.display = 'none';
+    return;
+  }
+
+  // header
+  const header = data2d[0];
+  const thead = document.createElement('tr');
+  header.forEach(h=>{
+    const th = document.createElement('th'); th.textContent = h; thead.appendChild(th);
+  });
+  dataTable.appendChild(thead);
+
+  // rows
+  for(let i=1;i<data2d.length;i++){
+    const tr = document.createElement('tr');
+    data2d[i].forEach(cell=>{
+      const td = document.createElement('td'); td.textContent = cell; tr.appendChild(td);
+    });
+    dataTable.appendChild(tr);
+  }
+
+  // input row
+  const inRow = document.createElement('tr'); inRow.id = 'inputRow';
+  header.forEach(_=>{
+    const td = document.createElement('td');
+    const inp = document.createElement('input'); inp.className='table-input';
+    td.appendChild(inp); inRow.appendChild(td);
+  });
+  dataTable.appendChild(inRow);
+
+  saveBtn.style.display = 'inline-block';
+}
+
+// kaydet fonksiyonu -> doPost append moduna uygun olarak çalışır
+saveBtn.addEventListener('click', async ()=>{
+  try {
+    const inputs = Array.from(document.querySelectorAll('#inputRow input'));
+    const vals = inputs.map(i => i.value.trim());
+    if(vals.every(v => v === "")){
+      alert('Lütfen en az bir hücreye değer girin.');
+      return;
+    }
+    saveBtn.disabled = true; statusDiv.textContent = 'Kaydediliyor...';
+    // POST form urlencoded (kod.gs instanceof doPost expects parameter mode=append, sheet, data JSON string)
+    const body = new URLSearchParams();
+    body.append('mode','append');
+    body.append('sheet', currentSheet);
+    body.append('data', JSON.stringify(vals));
+    const res = await fetch(API_URL, { method:'POST', body });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if(json && json.success){
+      statusDiv.textContent = 'Kaydedildi.';
+      // yenile
+      await loadSheet(currentSheet);
+    } else {
+      throw new Error(json && (json.message || json.error) || 'Bilinmeyen hata');
+    }
+  } catch (err){
+    statusDiv.textContent = 'Hata: ' + err.message;
+    console.error(err);
+  } finally {
+    saveBtn.disabled = false;
+  }
+});
+
+logoutBtn.addEventListener('click', ()=>{
+  // basit çıkış -> sayfayı yenile
+  location.reload();
+});
+
+// otomatik olarak focus username
+usernameInput.focus();
+</script>
 </body>
 </html>
