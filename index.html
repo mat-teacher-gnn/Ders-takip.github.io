@@ -1,107 +1,200 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<title>Öğrenci Takip Sistemi</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #eef2f7;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .login-box {
-    margin-top: 40px;
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  table {
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: white;
-  }
-  td, th {
-    border: 1px solid #999;
-    padding: 6px 10px;
-    text-align: center;
-  }
-  input, button {
-    margin-top: 8px;
-    padding: 6px;
-    width: 200px;
-  }
-  button { cursor: pointer; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Sheet Öğrenci Takip</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    h1 { margin: 20px 0; color: #00c3ff; }
+    #login {
+      margin: 20px auto;
+      padding: 15px;
+      background: #1e1e1e;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 8px;
+    }
+    input {
+      width: 80%;
+      padding: 8px;
+      margin-bottom: 10px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 5px;
+      text-align: center;
+    }
+    button {
+      padding: 8px 20px;
+      background: #00c3ff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #fff;
+    }
+    button:hover { background: #009cd1; }
+    table {
+      border-collapse: collapse;
+      margin: auto;
+      width: 95%;
+      max-width: 900px;
+      background: #1e1e1e;
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #444;
+    }
+    th {
+      background: #222;
+      color: #00c3ff;
+    }
+    input.data-input {
+      width: 100%;
+      background: #222;
+      color: #fff;
+      border: none;
+      text-align: center;
+      padding: 6px;
+    }
+    #saveBtn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: #00c3ff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #fff;
+      transition: 0.3s;
+      display: none;
+    }
+    #saveBtn:hover { background: #009cd1; }
+  </style>
 </head>
 <body>
+  <h1>📚 Öğrenci Takip Tablosu</h1>
 
-<div class="login-box">
-  <h2>Öğrenci Girişi</h2>
-  <input id="isim" placeholder="İsim girin"><br>
-  <input id="sifre" type="password" placeholder="Şifre girin"><br>
-  <button onclick="girisYap()">Aç</button>
-  <div id="mesaj"></div>
-</div>
+  <div id="login">
+    <input type="text" id="studentName" placeholder="Öğrenci ismini yaz..." />
+    <br />
+    <button id="openBtn">Aç</button>
+  </div>
 
-<table id="veriTablo" style="display:none"></table>
+  <table id="data-table"></table>
+  <button id="saveBtn">💾 Kaydet</button>
 
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
+    let currentSheet = "";
 
-async function girisYap() {
-  const name = document.getElementById("isim").value.trim();
-  const password = document.getElementById("sifre").value.trim();
-  document.getElementById("mesaj").textContent = "Kontrol ediliyor...";
-
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      body: JSON.stringify({ action: "login", name, password })
-    });
-    const data = await response.json();
-
-    if (!data.success) {
-      document.getElementById("mesaj").textContent = data.message;
-      return;
+    async function getSheetNames() {
+      const res = await fetch(API_URL + "?mode=sheets");
+      return res.json();
     }
 
-    document.querySelector(".login-box").style.display = "none";
-    const tablo = document.getElementById("veriTablo");
-    tablo.style.display = "table";
-    tablo.innerHTML = "";
+    async function getSheetData(sheetName) {
+      const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(sheetName));
+      return res.json();
+    }
 
-    data.data.forEach((satir, i) => {
-      const tr = document.createElement("tr");
-      satir.forEach(hucre => {
-        const td = document.createElement(i === 0 ? "th" : "td");
-        td.textContent = hucre;
-        tr.appendChild(td);
+    function renderTable(data) {
+      const table = document.getElementById("data-table");
+      const saveBtn = document.getElementById("saveBtn");
+      table.innerHTML = "";
+      if (!data || data.length === 0) {
+        table.innerHTML = "<tr><td>Veri bulunamadı</td></tr>";
+        saveBtn.style.display = "none";
+        return;
+      }
+
+      // Başlık satırı
+      const header = document.createElement("tr");
+      data[0].forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        header.appendChild(th);
       });
-      tablo.appendChild(tr);
-    });
+      table.appendChild(header);
 
-    // Boş bir satır ekle (veri girişi için)
-    const yeni = document.createElement("tr");
-    const sutunSayisi = data.data[0].length;
-    for (let i = 0; i < sutunSayisi; i++) {
-      const td = document.createElement("td");
-      const input = document.createElement("input");
-      input.placeholder = "Yeni veri";
-      td.appendChild(input);
-      yeni.appendChild(td);
+      // Veri satırları
+      for (let i = 1; i < data.length; i++) {
+        const tr = document.createElement("tr");
+        data[i].forEach(cell => {
+          const td = document.createElement("td");
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      }
+
+      // Boş satır (veri girişi)
+      const inputRow = document.createElement("tr");
+      inputRow.id = "input-row";
+      data[0].forEach(() => {
+        const td = document.createElement("td");
+        const input = document.createElement("input");
+        input.className = "data-input";
+        td.appendChild(input);
+        inputRow.appendChild(td);
+      });
+      table.appendChild(inputRow);
+
+      table.style.display = "table";
+      saveBtn.style.display = "inline-block";
     }
-    tablo.appendChild(yeni);
 
-  } catch (err) {
-    document.getElementById("mesaj").textContent = "Bağlantı hatası: " + err;
-  }
-}
-</script>
+    async function saveData() {
+      const inputs = document.querySelectorAll("#input-row input");
+      const values = Array.from(inputs).map(i => i.value.trim());
+      if (values.every(v => v === "")) {
+        alert("Lütfen veri girin.");
+        return;
+      }
 
+      const body = new URLSearchParams();
+      body.append("mode", "append");
+      body.append("sheet", currentSheet);
+      body.append("data", JSON.stringify(values));
+
+      const res = await fetch(API_URL, { method: "POST", body });
+      const result = await res.json();
+      alert(result.message || "Veri eklendi!");
+      loadSheet(currentSheet);
+    }
+
+    async function loadSheet(name) {
+      currentSheet = name;
+      const data = await getSheetData(name);
+      renderTable(data);
+    }
+
+    async function openSheet() {
+      const name = document.getElementById("studentName").value.trim();
+      if (!name) {
+        alert("Lütfen bir isim girin.");
+        return;
+      }
+      const sheets = await getSheetNames();
+      if (!sheets.includes(name)) {
+        alert(`${name} adında bir sayfa bulunamadı.`);
+        return;
+      }
+      document.getElementById("login").style.display = "none";
+      loadSheet(name);
+    }
+
+    document.getElementById("openBtn").onclick = openSheet;
+    document.getElementById("saveBtn").onclick = saveData;
+  </script>
 </body>
 </html>
