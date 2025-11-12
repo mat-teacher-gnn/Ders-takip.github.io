@@ -1,342 +1,107 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Öğrenci Takip - Giriş ile Sayfa Görüntüleme</title>
+<meta charset="UTF-8">
+<title>Öğrenci Takip Sistemi</title>
 <style>
-  :root{--bg:#0f1720;--card:#0b1220;--accent:#06b6d4;--muted:#9ca3af}
-  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#e6eef6}
-  .center{max-width:1100px;margin:24px auto;padding:18px}
-  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.04));border-radius:10px;padding:18px;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
-  h1{margin:0 0 12px;color:var(--accent);text-align:center}
-  .row{display:flex;gap:12px;align-items:center}
-  .col{flex:1}
-  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-  input[type=text], select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:#071023;color:#fff}
-  button{background:var(--accent);color:#04202a;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:600}
-  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-  #tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-  .tab{padding:8px 12px;border-radius:8px;background:#061220;color:#9bdbe6;cursor:pointer}
-  .tab.active{background:var(--accent);color:#022226}
-  table{width:100%;border-collapse:collapse;margin-top:12px;background:transparent}
-  th,td{padding:8px;border:1px solid rgba(255,255,255,0.04);text-align:left;font-size:14px}
-  th{background:rgba(255,255,255,0.02);color:#9bdbe6}
-  td input{width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:#071023;color:#fff}
-  .status{margin-top:10px;color:var(--muted);font-size:13px}
-  .right{display:flex;gap:8px;align-items:center}
-  small { color: var(--muted); }
+  body {
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .login-box {
+    margin-top: 40px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  table {
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+  }
+  td, th {
+    border: 1px solid #999;
+    padding: 6px 10px;
+    text-align: center;
+  }
+  input, button {
+    margin-top: 8px;
+    padding: 6px;
+    width: 200px;
+  }
+  button { cursor: pointer; }
 </style>
 </head>
 <body>
-  <div class="center">
-    <div class="card">
-      <h1>Öğrenci Takip - Veri Görüntüleme</h1>
 
-      <!-- LOGIN -->
-      <div id="loginBox">
-        <div style="display:flex;gap:12px;align-items:end">
-          <div style="flex:2">
-            <label>Kullanıcı Adı</label>
-            <input id="loginUser" type="text" placeholder="ör. Merve" />
-          </div>
-          <div style="flex:2">
-            <label>Şifre (gizlenmez — karakterler görünür)</label>
-            <input id="loginPass" type="text" placeholder="şifre gir (karakterler görünür)" />
-          </div>
-          <div style="flex:1">
-            <label style="visibility:hidden">.</label>
-            <button id="loginBtn">Giriş</button>
-          </div>
-        </div>
-        <div class="status" id="loginStatus"><small>Google Sheets'ten 'Kullanıcı Bilgileri' kontrolü ile giriş yapılır.</small></div>
-      </div>
+<div class="login-box">
+  <h2>Öğrenci Girişi</h2>
+  <input id="isim" placeholder="İsim girin"><br>
+  <input id="sifre" type="password" placeholder="Şifre girin"><br>
+  <button onclick="girisYap()">Aç</button>
+  <div id="mesaj"></div>
+</div>
 
-      <!-- AFTER LOGIN -->
-      <div id="app" style="display:none;margin-top:14px">
-        <div class="row" style="align-items:flex-start">
-          <div class="col" style="min-width:250px">
-            <div class="right">
-              <div style="flex:1">
-                <label>Geçerli Kullanıcı</label>
-                <input id="curUser" type="text" readonly />
-              </div>
-              <div style="width:140px">
-                <label>Rol</label>
-                <input id="curRole" type="text" readonly />
-              </div>
-              <div style="width:120px">
-                <label style="visibility:hidden">.</label>
-                <button id="logoutBtn" class="ghost">Çıkış</button>
-              </div>
-            </div>
-
-            <div style="margin-top:12px">
-              <label>Sayfalar (Sekmeler)</label>
-              <div id="tabs"></div>
-            </div>
-
-            <div class="status" id="infoText" style="margin-top:10px"></div>
-          </div>
-
-          <div class="col" style="flex:2">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div><label>Veri: <small id="sheetName">-</small></label></div>
-              <div class="right">
-                <button id="refreshBtn" class="ghost">Yenile</button>
-                <button id="saveBtn">Kaydet</button>
-              </div>
-            </div>
-
-            <div id="tableWrap" style="margin-top:10px;overflow:auto;max-height:520px">
-              <table id="dataTable"></table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
+<table id="veriTablo" style="display:none"></table>
 
 <script>
-/*
-  Tek dosya frontend:
-  - kod.gs değiştirilmeden çalışır.
-  - Giriş için "Kullanıcı Bilgileri" sekmesini okur ve kullanıcı doğrulaması tarayıcıda yapılır.
-  - Hoca rolü (rol sütununda 'hoca' veya 'admin' geçen) ise tüm sayfalar gösterilir.
-  - Öğrenci rolünde ise sadece kullanıcı adı ile aynı isimdeki sayfa gösterilir.
-  - Şifre karşılaştırması tam karakter bazlıdır (boşluk/special char korunur).
-  - Altında input satırı ve 'Kaydet' butonu ile append (POST) isteği yapılır.
-*/
-
 const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
 
-// Utility: fetch JSON helper
-async function apiFetch(url, opts){
-  const res = await fetch(url, opts);
-  if(!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
-}
+async function girisYap() {
+  const name = document.getElementById("isim").value.trim();
+  const password = document.getElementById("sifre").value.trim();
+  document.getElementById("mesaj").textContent = "Kontrol ediliyor...";
 
-// Global state
-let sheetNames = [];
-let currentUser = null;
-let currentRole = null;
-let currentSheet = null;
-let currentData = null; // raw array-of-arrays
-
-// Elements
-const loginBtn = document.getElementById('loginBtn');
-const loginUserInput = document.getElementById('loginUser');
-const loginPassInput = document.getElementById('loginPass');
-const loginStatus = document.getElementById('loginStatus');
-
-const appDiv = document.getElementById('app');
-const loginBox = document.getElementById('loginBox');
-const curUser = document.getElementById('curUser');
-const curRole = document.getElementById('curRole');
-const tabsDiv = document.getElementById('tabs');
-const infoText = document.getElementById('infoText');
-const sheetNameLabel = document.getElementById('sheetName');
-const dataTable = document.getElementById('dataTable');
-const refreshBtn = document.getElementById('refreshBtn');
-const saveBtn = document.getElementById('saveBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-
-// Login handler
-loginBtn.addEventListener('click', async () => {
-  const username = loginUserInput.value;   // do NOT trim: exact match required
-  const password = loginPassInput.value;   // do NOT trim
-  if(!username){ loginStatus.innerHTML = "<span style='color:#f88'>Kullanıcı adı girin</span>"; return; }
-
-  loginStatus.textContent = 'Kullanıcı bilgileri okunuyor...';
   try {
-    // fetch Kullanıcı Bilgileri sheet (doGet ?sheet=...)
-    const url = API_URL + '?sheet=' + encodeURIComponent('Kullanıcı Bilgileri');
-    const json = await apiFetch(url);
-    // format: json is array-of-arrays (first row headers)
-    if(!Array.isArray(json) || json.length < 2){
-      loginStatus.innerHTML = "<span style='color:#f88'>Kullanıcı Bilgileri bulunamadı veya boş.</span>";
-      return;
-    }
-    const headers = json[0].map(h=>String(h));
-    const rows = json.slice(1);
-    // find user row: assume first column is kullanıcı adı, second column şifre, third column rol (if present)
-    let found = null;
-    for(const r of rows){
-      const uname = String(r[0] === undefined || r[0] === null ? '' : r[0]);
-      const pwd   = String(r[1] === undefined || r[1] === null ? '' : r[1]);
-      if(uname === username && pwd === password){
-        found = r;
-        break;
-      }
-    }
-    if(!found){
-      loginStatus.innerHTML = "<span style='color:#f88'>Kullanıcı adı veya şifre yanlış.</span>";
-      return;
-    }
-    // Determine role (if 3rd col exists)
-    const role = found.length >= 3 ? String(found[2]||'').toLowerCase() : '';
-    currentUser = username;
-    currentRole = role || 'ogrenci';
-    curUser.value = currentUser;
-    curRole.value = currentRole;
-    loginStatus.innerHTML = "<span style='color:#8f8'>Giriş başarılı.</span>";
-
-    // hide login and show app
-    loginBox.style.display = 'none';
-    appDiv.style.display = 'block';
-
-    // load sheet names and initialize tabs according to role
-    await loadSheetNames();
-    if(isTeacherRole(currentRole)){
-      renderTabs(sheetNames);
-      // default first sheet
-      if(sheetNames.length) await loadAndShowSheet(sheetNames[0]);
-    } else {
-      // student role: only access sheet named exactly as username
-      if(sheetNames.includes(currentUser)){
-        renderTabs([currentUser]);
-        await loadAndShowSheet(currentUser);
-      } else {
-        infoText.innerHTML = "<span style='color:#f88'>Kullanıcı adına uygun sayfa bulunamadı: " + currentUser + "</span>";
-        renderTabs([]);
-        clearTable();
-      }
-    }
-
-  } catch (err) {
-    console.error(err);
-    loginStatus.innerHTML = `<span style='color:#f88'>Bağlantı hatası: ${err.message}</span>`;
-  }
-});
-
-function isTeacherRole(role){
-  if(!role) return false;
-  const r = role.toString().toLowerCase();
-  return r === 'hoca' || r === 'ogretmen' || r === 'admin' || r === 'teacher';
-}
-
-// Load sheet names (mode=sheets expected on server)
-async function loadSheetNames(){
-  try {
-    const json = await apiFetch(API_URL + '?mode=sheets');
-    if(Array.isArray(json)) sheetNames = json;
-    else sheetNames = [];
-  } catch (err) {
-    sheetNames = [];
-    console.error('sheet names fetch error', err);
-  }
-}
-
-// Render tabs
-function renderTabs(list){
-  tabsDiv.innerHTML = '';
-  list.forEach((name,i)=>{
-    const d = document.createElement('div');
-    d.className = 'tab' + (i===0 ? ' active' : '');
-    d.textContent = name;
-    d.onclick = async ()=>{ document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); d.classList.add('active'); await loadAndShowSheet(name); };
-    tabsDiv.appendChild(d);
-  });
-}
-
-// Load selected sheet and render table
-async function loadAndShowSheet(sheet){
-  try {
-    sheetNameLabel.textContent = sheet;
-    currentSheet = sheet;
-    infoText.textContent = 'Veriler yükleniyor...';
-    const json = await apiFetch(API_URL + '?sheet=' + encodeURIComponent(sheet));
-    // json is array-of-arrays: [ [header1,header2..], [r1c1, r1c2...], ... ]
-    if(!Array.isArray(json) || json.length === 0){ infoText.innerHTML = "<span style='color:#f88'>Sayfa boş veya okunamadı.</span>"; clearTable(); return; }
-    currentData = json;
-    renderDataTable(json);
-    infoText.innerHTML = `Sayfa: <b>${sheet}</b> — ${json.length-1} veri satırı. (en altta boş giriş satırı)`; 
-  } catch (err) {
-    console.error(err);
-    infoText.innerHTML = `<span style='color:#f88'>Veri yüklenemedi: ${err.message}</span>`;
-  }
-}
-
-function clearTable(){ dataTable.innerHTML = ''; sheetNameLabel.textContent = '-'; }
-
-// Render data as table with last input row
-function renderDataTable(arr){
-  dataTable.innerHTML = '';
-  const headers = arr[0];
-  // header
-  const thead = document.createElement('tr');
-  headers.forEach(h=>{
-    const th = document.createElement('th'); th.textContent = h; thead.appendChild(th);
-  });
-  dataTable.appendChild(thead);
-  // rows
-  for(let i=1;i<arr.length;i++){
-    const tr = document.createElement('tr');
-    arr[i].forEach(cell=>{
-      const td = document.createElement('td'); td.textContent = cell === undefined ? '' : cell; tr.appendChild(td);
+    const response = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "login", name, password })
     });
-    dataTable.appendChild(tr);
-  }
-  // input row at bottom (one input per column)
-  const inputRow = document.createElement('tr'); inputRow.id = '__inputrow';
-  headers.forEach((h, idx)=>{
-    const td = document.createElement('td');
-    const inp = document.createElement('input');
-    inp.type = 'text';
-    inp.placeholder = (typeof h === 'string' && h.length>0) ? h : ('col'+(idx+1));
-    td.appendChild(inp);
-    inputRow.appendChild(td);
-  });
-  dataTable.appendChild(inputRow);
-}
+    const data = await response.json();
 
-// Save bottom row -> append to sheet via POST (mode=append)
-saveBtn.addEventListener('click', async ()=>{
-  if(!currentSheet) { alert('Önce bir sayfa seçin.'); return; }
-  const inputs = document.querySelectorAll('#__inputrow input');
-  if(!inputs || inputs.length === 0){ alert('Giriş satırı yok.'); return;}
-  const values = Array.from(inputs).map(i => i.value);
-  // require at least one non-empty
-  if(values.every(v => v === '')) { alert('En az bir hücre doldurun.'); return; }
-
-  try {
-    saveBtn.disabled = true; saveBtn.textContent = 'Kaydediliyor...';
-    const body = new URLSearchParams();
-    body.append('mode','append');
-    body.append('sheet', currentSheet);
-    body.append('data', JSON.stringify(values));
-    const res = await fetch(API_URL, { method:'POST', body });
-    const json = await res.json();
-    if(json && (json.success || json.message)) {
-      alert(json.message || 'Satır eklendi.');
-      // reload sheet
-      await loadAndShowSheet(currentSheet);
-      // focus clear inputs (optional)
-    } else {
-      alert('Kaydetme hatası: ' + (JSON.stringify(json) || 'unknown'));
+    if (!data.success) {
+      document.getElementById("mesaj").textContent = data.message;
+      return;
     }
+
+    document.querySelector(".login-box").style.display = "none";
+    const tablo = document.getElementById("veriTablo");
+    tablo.style.display = "table";
+    tablo.innerHTML = "";
+
+    data.data.forEach((satir, i) => {
+      const tr = document.createElement("tr");
+      satir.forEach(hucre => {
+        const td = document.createElement(i === 0 ? "th" : "td");
+        td.textContent = hucre;
+        tr.appendChild(td);
+      });
+      tablo.appendChild(tr);
+    });
+
+    // Boş bir satır ekle (veri girişi için)
+    const yeni = document.createElement("tr");
+    const sutunSayisi = data.data[0].length;
+    for (let i = 0; i < sutunSayisi; i++) {
+      const td = document.createElement("td");
+      const input = document.createElement("input");
+      input.placeholder = "Yeni veri";
+      td.appendChild(input);
+      yeni.appendChild(td);
+    }
+    tablo.appendChild(yeni);
+
   } catch (err) {
-    console.error(err);
-    alert('Kaydetme sırasında hata: ' + err.message);
-  } finally {
-    saveBtn.disabled = false; saveBtn.textContent = 'Kaydet';
+    document.getElementById("mesaj").textContent = "Bağlantı hatası: " + err;
   }
-});
-
-// refresh button
-refreshBtn.addEventListener('click', async ()=>{ if(currentSheet) await loadAndShowSheet(currentSheet); });
-
-// logout
-logoutBtn.addEventListener('click', ()=>{ location.reload(); });
-
-/* Optional: auto fill username from URL param ?user=... */
-(function autoUserFromQuery(){
-  const q = new URLSearchParams(location.search);
-  const u = q.get('user');
-  if(u) loginUserInput.value = u;
-})();
+}
 </script>
+
 </body>
 </html>
