@@ -1,92 +1,136 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<title>Öğrenci Takip Sistemi</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Öğrenci Takip</title>
 <style>
-  body { font-family: Arial; text-align: center; background: #f9f9f9; }
-  table { border-collapse: collapse; margin: 20px auto; }
-  td, th { border: 1px solid #ccc; padding: 6px 12px; }
-  input { width: 80px; text-align: center; }
-  #load { margin-top: 20px; }
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 10px;
+    background: #f4f4f4;
+  }
+  #data {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+  table {
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 480px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: center;
+    font-size: 14px;
+  }
+  input[type="number"] {
+    width: 100%;
+    border: none;
+    text-align: center;
+  }
+  input[type="text"] {
+    padding: 6px;
+    font-size: 16px;
+  }
+  button {
+    padding: 8px 14px;
+    margin: 6px;
+    border: none;
+    border-radius: 8px;
+    background: #007bff;
+    color: white;
+    font-size: 15px;
+  }
+  button:hover { background: #0056b3; }
 </style>
 </head>
 <body>
-  <h2>📘 Öğrenci Takip Sistemi</h2>
-  <input id="name" placeholder="Sayfa adı (ör: Merve)" />
-  <button onclick="loadSheet()">Aç</button>
-  <div id="load"></div>
-  <table id="table"></table>
-  <button onclick="saveRow()">Kaydet</button>
+
+<h3>📘 Öğrenci Takip Sistemi</h3>
+
+<input type="text" id="sheetName" placeholder="İsim girin">
+<button onclick="loadSheet()">Aç</button>
+
+<div id="data"></div>
 
 <script>
-const apiURL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
-
-let currentSheet = null;
+const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
 
 async function loadSheet() {
-  const name = document.getElementById("name").value.trim();
-  if (!name) return alert("Sayfa adı girin!");
-  currentSheet = name;
-  document.getElementById("load").innerText = "Yükleniyor...";
+  const name = document.getElementById("sheetName").value.trim();
+  if (!name) return alert("Lütfen isim girin!");
 
-  try {
-    const res = await fetch(`${apiURL}?name=${encodeURIComponent(name)}`);
-    const data = await res.json();
-    if (data.error) return alert(data.error);
-    renderTable(data.data);
-    document.getElementById("load").innerText = "";
-  } catch (err) {
-    document.getElementById("load").innerText = "Bağlantı hatası";
-  }
+  const res = await fetch(`${API_URL}?sheet=${encodeURIComponent(name)}`);
+  const data = await res.json();
+  if (data.error) return alert(data.error);
+
+  renderTable(data.values, name);
 }
 
-function renderTable(rows) {
-  const table = document.getElementById("table");
-  table.innerHTML = "";
-  rows.forEach((row, i) => {
+function renderTable(values, sheetName) {
+  const container = document.getElementById("data");
+  container.innerHTML = "";
+
+  const table = document.createElement("table");
+  const headerRow = document.createElement("tr");
+
+  values[0].forEach(h => {
+    const th = document.createElement("th");
+    th.textContent = h;
+    headerRow.appendChild(th);
+  });
+  table.appendChild(headerRow);
+
+  // Mevcut satırları yaz
+  for (let i = 1; i < values.length; i++) {
     const tr = document.createElement("tr");
-    row.forEach((cell, j) => {
+    values[i].forEach((cell, j) => {
       const td = document.createElement("td");
-      if (i === rows.length - 1 && j > 0) {
-        const inp = document.createElement("input");
-        inp.type = "number";
-        td.appendChild(inp);
-      } else if (i === rows.length - 1 && j === 0) {
-        td.innerText = "→ Otomatik tarih";
+      if (j === 0) {
+        td.textContent = cell || getToday(); // İlk sütun tarih
       } else {
-        td.innerText = cell;
+        const input = document.createElement("input");
+        input.type = "number";
+        input.value = cell || "";
+        td.appendChild(input);
       }
       tr.appendChild(td);
     });
     table.appendChild(tr);
+  }
+
+  // Boş yeni satır ekle
+  const tr = document.createElement("tr");
+  values[0].forEach((_, j) => {
+    const td = document.createElement("td");
+    if (j === 0) td.textContent = getToday();
+    else {
+      const input = document.createElement("input");
+      input.type = "number";
+      td.appendChild(input);
+    }
+    tr.appendChild(td);
   });
+  table.appendChild(tr);
+
+  container.appendChild(table);
 }
 
-async function saveRow() {
-  if (!currentSheet) return alert("Önce sayfa açın!");
-  const lastRow = Array.from(document.querySelectorAll("tr:last-child td input"))
-    .map(i => i.value);
-
-  const body = {
-    name: currentSheet,
-    row: ["", ...lastRow]
-  };
-
-  const res = await fetch(apiURL, {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json" }
-  });
-
-  const data = await res.json();
-  if (data.success) {
-    alert("Kaydedildi!");
-    loadSheet();
-  } else {
-    alert("Hata: " + (data.error || "Bilinmeyen"));
-  }
+function getToday() {
+  const d = new Date();
+  const aylar = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+  return `${d.getDate()} ${aylar[d.getMonth()]}`;
 }
 </script>
+
 </body>
 </html>
