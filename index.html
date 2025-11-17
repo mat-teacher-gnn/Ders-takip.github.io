@@ -1,185 +1,239 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Google Sheet Görüntüleme ve Giriş</title>
-<style>
-  body {
-    margin: 0;
-    font-family: sans-serif;
-    background: #111;
-    color: #eee;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 100vh;
-    padding: 10px;
-  }
-  h1 {
-    color: #4CAF50;
-    margin: 5px 0;
-  }
-  select, button, input {
-    background: #222;
-    color: #eee;
-    border: 1px solid #555;
-    border-radius: 6px;
-    padding: 8px;
-    font-size: 15px;
-  }
-  table {
-    border-collapse: collapse;
-    width: 95%;
-    margin-top: 10px;
-    background: #1b1b1b;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  th, td {
-    border: 1px solid #444;
-    padding: 8px;
-    text-align: center;
-  }
-  th {
-    background: #333;
-    font-weight: bold;
-  }
-  input[type="number"] {
-    width: 80px;
-    text-align: center;
-    background: #222;
-    color: #fff;
-    border: 1px solid #555;
-    border-radius: 4px;
-  }
-  #topBar {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  #data {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    overflow-x: auto;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> Halil hoca Öğrenci Takip sayfası </title>
+  <style>
+    body { /* Sayfa genel stil */
+      font-family: Arial, sans-serif; /* Yazı tipi ailesi */
+      background: #313131; /* Sayfa arka plan rengi */
+      color: #eee; /* Sayfa yazı rengi */
+      margin: 0; /* Sayfa kenar boşluğu */
+      padding: 0; /* Sayfa iç boşluğu */
+      text-align: center; /* Tüm içerikleri ortalar */
+      background-image: url('resim2.png'); 
+      background-position:  center; /* Sol ve sağda ortalanır */
+      background-repeat: no-repeat; /* Tekrar etmez */
+      background-size: 100% , 100%; /* Resim boyutları ayarlanır */
+    }
+    h1 { /* Başlık stil */
+      margin: 20px 0; color: #1e2c30;
+    }
+    #login { /* Giriş kutusu stil */
+      margin: 30px auto;
+      padding: 15px;
+      background: #1e1e1e;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 8px;
+    }
+    input { /* Giriş kutusu input stil */
+      width: 80%;
+      padding: 18px;
+      margin-bottom: 10px;
+      background: #dddacf;
+      color: #030225;
+      border: 1px solid #7a2a2a;
+      border-radius: 5px;
+      text-align: center;
+    }
+    button { /* Tüm butonlar */
+      padding: 8px 20px;
+      background: #00c3ff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #fff;
+    }
+    button:hover { /* Buton hover efekti */
+      background: #009cd1;
+    }
+    table { /* Tablo genel stil - yazılara göre daraltıldı */
+      border-collapse: collapse; /* Tablodaki hücre kenarlarını birleştirir, boşluk bırakmaz */
+      margin: auto; /* Tabloyu yatayda ortalar */
+      width: 10%; /* Tablo genişliği yazılara göre daraltıldı */
+      max-width: 700px; /* Tablo maksimum 700px genişliğe ulaşabilir */
+      background: #202935; /* Tablo arka plan rengini koyu mavi yapar */
+      border-radius: 5px; /* Tablo köşelerini yuvarlatır */
+      overflow: hidden; /* Taşan içerikleri gizler, köşe yuvarlatma düzgün görünür */
+      display: none; /* Tabloyu başlangıçta gizler, JS ile gösterilir */
+    }
+    th, td { /* Tablo hücreleri - yazıdan 2px daha geniş */
+      padding: 4px 4px; /* 12px yerine 14px ile 2px daha geniş */
+      border: 1px solid #444;
+    }
+    th { /* Tablo başlık hücresi */
+      background: #222;
+      color: #cea00a;
+    }
+    input.data-input { /* Tablo veri girişi inputları */
+      width: 100%;
+      background: #91fae0;
+      color: #0c0000;
+      border: none;
+      text-align: center;
+      padding: 2px;
+    }
+    #saveBtn { /* Kaydet butonu */
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: #00c3ff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #fff;
+      transition: 0.3s;
+      display: none;
+    }
+    #saveBtn:hover { /* Kaydet butonu hover */
+      background: #009cd1;
+    }
+  </style>
 </head>
 <body>
-  <h1>📘 Öğrenci Takip Sistemi</h1>
-  <div id="topBar">
-    <input id="sheetName" placeholder="Sayfa adı (örnek: Merve)" />
-    <button id="openBtn">Aç</button>
-    <button id="saveBtn">Kaydet</button>
+  <h1>📚 Öğrenci Takip otomasyonu</h1>
+
+  <div id="login">
+    <input type="text" id="studentName" placeholder="Öğrenci ismini yaz..." />
+    <br />
+    <button id="openBtn">Giriş</button>
   </div>
-  <div id="data"></div>
 
-<script>
-const apiUrl = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
-let currentSheet = "";
+  <table id="data-table"></table>
+  <button id="saveBtn">💾 Kaydet</button>
 
-function getToday() {
-  const date = new Date();
-  return `${date.getDate()} ${date.toLocaleString('tr-TR', { month: 'long' })}`;
-}
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
+    let currentSheet = "";
 
-document.getElementById("openBtn").onclick = async () => {
-  const name = document.getElementById("sheetName").value.trim();
-  if (!name) return alert("Lütfen bir sayfa adı girin!");
-  currentSheet = name;
-
-  const res = await fetch(`${apiUrl}?sheet=${encodeURIComponent(name)}`);
-  const data = await res.json();
-
-  if (!data.values) {
-    alert("Sayfa bulunamadı veya boş!");
-    return;
-  }
-
-  renderTable(data.values);
-};
-
-function renderTable(values) {
-  const container = document.getElementById("data");
-  container.innerHTML = "";
-
-  // Verileri transpoze et
-  const transposed = values[0].map((_, colIndex) =>
-    values.map(row => row[colIndex])
-  );
-
-  const table = document.createElement("table");
-
-  // Başlık satırı
-  const headerRow = document.createElement("tr");
-  transposed[0].forEach(h => {
-    const th = document.createElement("th");
-    th.textContent = h;
-    headerRow.appendChild(th);
-  });
-  table.appendChild(headerRow);
-
-  // Diğer satırlar
-  for (let i = 1; i < transposed.length; i++) {
-    const tr = document.createElement("tr");
-    transposed[i].forEach((cell, j) => {
-      const td = document.createElement("td");
-      if (j === 0) td.textContent = cell || getToday();
-      else {
-        const input = document.createElement("input");
-        input.type = "number";
-        input.value = cell || "";
-        td.appendChild(input);
-      }
-      tr.appendChild(td);
-    });
-    table.appendChild(tr);
-  }
-
-  // En alta yeni satır (veri girişi)
-  const newRow = document.createElement("tr");
-  transposed[0].forEach((_, j) => {
-    const td = document.createElement("td");
-    if (j === 0) td.textContent = getToday();
-    else {
-      const input = document.createElement("input");
-      input.type = "number";
-      td.appendChild(input);
+    async function getSheetNames() {
+      const res = await fetch(API_URL + "?mode=sheets");
+      return res.json();
     }
-    newRow.appendChild(td);
-  });
-  table.appendChild(newRow);
 
-  container.appendChild(table);
-}
+    async function getSheetData(sheetName) {
+      const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(sheetName));
+      return res.json();
+    }
 
-document.getElementById("saveBtn").onclick = async () => {
-  if (!currentSheet) return alert("Lütfen önce bir sayfa açın!");
+    function renderTable(data) {
+      const table = document.getElementById("data-table");
+      const saveBtn = document.getElementById("saveBtn");
+      table.innerHTML = "";
+      if (!data || data.length === 0) {
+        table.innerHTML = "<tr><td>Veri bulunamadı</td></tr>";
+        saveBtn.style.display = "none";
+        return;
+      }
 
-  const rows = [...document.querySelectorAll("table tr")];
-  const lastRowInputs = rows[rows.length - 1].querySelectorAll("input");
+      // Başlık satırı
+      const header = document.createElement("tr");
+      data[0].forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        header.appendChild(th);
+      });
+      table.appendChild(header);
 
-  const newRow = [getToday()];
-  lastRowInputs.forEach(input => newRow.push(input.value || ""));
+      // Boş satır (veri girişi) - EN ÜSTE
+      const inputRow = document.createElement("tr");
+      inputRow.id = "input-row";
+      // Zaman başlığının indexini bul
+      const zamanIndex = data[0].findIndex(h => h.toLowerCase().includes("zaman"));
+      // Türkçe aylar
+      const aylar = ["ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+      const now = new Date();
+      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getHours()}.${now.getMinutes().toString().padStart(2, "0")}`;
+      data[0].forEach((h, idx) => {
+        const td = document.createElement("td");
+        if (idx === zamanIndex) {
+          const input = document.createElement("input");
+          input.className = "data-input";
+          input.value = tarihStr;
+          input.readOnly = true;
+          td.appendChild(input);
+        } else {
+          const input = document.createElement("input");
+          input.className = "data-input";
+          td.appendChild(input);
+        }
+        inputRow.appendChild(td);
+      });
+      table.appendChild(inputRow);
 
-  const res = await fetch(apiUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "appendRow",
-      sheet: currentSheet,
-      row: newRow
-    })
-  });
+      // Veri satırları
+      for (let i = data.length - 1; i > 0; i--) {
+        const tr = document.createElement("tr");
+        data[i].forEach((cell, idx) => {
+          const td = document.createElement("td");
+          if (idx === 0) {
+            td.textContent = cell.slice(0, -5); // İlk sütunda son 5 karakteri gösterme
+          } else {
+            td.textContent = cell;
+          }
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      }
 
-  const data = await res.json();
-  if (data.result === "success") alert("✅ Veri eklendi!");
-  else alert("❌ Kaydetme hatası!");
-};
-</script>
+      table.style.display = "table";
+      saveBtn.style.display = "inline-block";
+    }
+
+    async function saveData() {
+      const inputs = document.querySelectorAll("#input-row input");
+      const values = Array.from(inputs).map(i => i.value.trim());
+      if (values.every(v => v === "")) {
+        alert("Lütfen veri girin.");
+        return;
+      }
+
+      const body = new URLSearchParams();
+      body.append("mode", "append");
+      body.append("sheet", currentSheet);
+      body.append("data", JSON.stringify(values));
+
+      const res = await fetch(API_URL, { method: "POST", body });
+      const result = await res.json();
+      alert(result.message || "Veri eklendi!");
+      document.getElementById("saveBtn").disabled = true; // Kaydet butonu deaktif
+      loadSheet(currentSheet);
+    }
+
+    async function loadSheet(name) {
+      currentSheet = name;
+      const data = await getSheetData(name);
+      renderTable(data);
+    }
+
+    async function openSheet() {
+      const name = document.getElementById("studentName").value.trim();
+      if (!name) {
+        alert("Lütfen bir isim girin.");
+        return;
+      }
+      localStorage.setItem("lastStudentName", name); // Son girilen ismi kaydet
+      const sheets = await getSheetNames();
+      if (!sheets.includes(name)) {
+        alert(`${name} adında bir sayfa bulunamadı.`);
+        return;
+      }
+      document.getElementById("login").style.display = "none";
+      loadSheet(name);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const studentInput = document.getElementById("studentName");
+      const lastStudent = localStorage.getItem("lastStudentName") || "";
+      if (lastStudent) {
+        studentInput.value = lastStudent;
+        studentInput.placeholder = lastStudent;
+      }
+    });
+
+    document.getElementById("openBtn").onclick = openSheet;
+    document.getElementById("saveBtn").onclick = saveData;
+  </script>
 </body>
 </html>
