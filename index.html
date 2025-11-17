@@ -170,9 +170,9 @@
           input.inputMode = "numeric";
         }
 
-        // Yeni eklenen kısım: '.' tuşuna basıldığında bir sonraki input'a geçme
+        // Güncellenen kısım: '.' ve 'Decimal' tuşlarına basıldığında bir sonraki input'a geçme
         input.addEventListener("keydown", function(event) {
-          if (event.key === ".") {
+          if (event.key === "." || event.key === "Decimal") { // Hem ana klavye hem de numerik tuş takımı için kontrol
             event.preventDefault(); // Varsayılan "." karakterini yazmayı engelle
             const allInputs = Array.from(inputRow.querySelectorAll(".data-input"));
             const currentIndex = allInputs.indexOf(this);
