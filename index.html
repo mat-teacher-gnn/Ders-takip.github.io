@@ -12,7 +12,7 @@
       margin: 0; /* Sayfa kenar boşluğu */
       padding: 0; /* Sayfa iç boşluğu */
       text-align: center; /* Tüm içerikleri ortalar */
-      background-image: url('resim2.png'); 
+      background-image: url('resim1.png'); 
       background-position: center center; /* Ortalanır */
       background-repeat: no-repeat; /* Tekrar etmez */
       background-size: contain; /* Oran bozulmadan ekrana sığar */
@@ -76,7 +76,10 @@
       color: #0c0000;
       border: none;
       text-align: center;
-      padding: 2px;
+      padding: 8px; /* Yüksekliği artırıldı */
+      font-size: 20px; /* Yazı büyütüldü */
+      height: 40px; /* Kutu yüksekliği artırıldı */
+      box-sizing: border-box;
     }
     #saveBtn { /* Kaydet butonu */
       margin-top: 10px;
@@ -151,22 +154,17 @@
       // Zaman başlığının indexini bul
       const zamanIndex = data[0].findIndex(h => h.toLowerCase().includes("zaman"));
       // Türkçe aylar
-      const aylar = ["ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+      const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
       const now = new Date();
-      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getHours()}.${now.getMinutes().toString().padStart(2, "0")}`;
+      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
       data[0].forEach((h, idx) => {
         const td = document.createElement("td");
+        const input = document.createElement("input");
+        input.className = "data-input";
         if (idx === zamanIndex) {
-          const input = document.createElement("input");
-          input.className = "data-input";
           input.value = tarihStr;
-          input.readOnly = true;
-          td.appendChild(input);
-        } else {
-          const input = document.createElement("input");
-          input.className = "data-input";
-          td.appendChild(input);
         }
+        td.appendChild(input);
         inputRow.appendChild(td);
       });
       table.appendChild(inputRow);
