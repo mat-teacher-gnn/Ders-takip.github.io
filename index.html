@@ -9,13 +9,13 @@
       font-family: Arial, sans-serif; /* Yazı tipi ailesi */
       background: #313131; /* Sayfa arka plan rengi */
       color: #eee; /* Sayfa yazı rengi */
-      margin: 1; /* Sayfa kenar boşluğu */
-      padding: 1; /* Sayfa iç boşluğu */
+      margin: 0; /* Sayfa kenar boşluğu */
+      padding: 0; /* Sayfa iç boşluğu */
       text-align: center; /* Tüm içerikleri ortalar */
       background-image: url('resim2.png'); 
       background-position:  center; /* Sol ve sağda ortalanır */
       background-repeat: no-repeat; /* Tekrar etmez */
-      background-size: 80% , 80%; /* Resim boyutları ayarlanır */
+      background-size: 100% , 100%; /* Resim boyutları ayarlanır */
     }
     h1 { /* Başlık stil */
       margin: 20px 0; color: #1e2c30;
@@ -100,8 +100,14 @@
     <button id="openBtn">Giriş</button>
   </div>
 
+  <button id="saveBtn">💾 Kaydet</button> <!-- Kaydet butonu tablo üstüne taşındı -->
   <table id="data-table"></table>
-  <button id="saveBtn">💾 Kaydet</button>
+
+  <!-- Sayfa en altına font boyutu ayarlama butonları -->
+  <div style="margin-top:40px;">
+    <button id="fontInc" style="font-size:16px; padding:2px 8px;">A+</button>
+    <button id="fontDec" style="font-size:16px; padding:2px 8px;">A-</button>
+  </div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
@@ -182,10 +188,13 @@
     }
 
     async function saveData() {
+      const saveBtn = document.getElementById("saveBtn");
+      saveBtn.disabled = true; // Butona basıldığı anda deaktif
       const inputs = document.querySelectorAll("#input-row input");
       const values = Array.from(inputs).map(i => i.value.trim());
       if (values.every(v => v === "")) {
         alert("Lütfen veri girin.");
+        saveBtn.disabled = false; // Veri yoksa tekrar aktif
         return;
       }
 
@@ -197,7 +206,6 @@
       const res = await fetch(API_URL, { method: "POST", body });
       const result = await res.json();
       alert(result.message || "Veri eklendi!");
-      document.getElementById("saveBtn").disabled = true; // Kaydet butonu deaktif
       loadSheet(currentSheet);
     }
 
@@ -234,6 +242,17 @@
 
     document.getElementById("openBtn").onclick = openSheet;
     document.getElementById("saveBtn").onclick = saveData;
+
+    document.getElementById("fontInc").onclick = function() {
+      const body = document.body;
+      let current = parseInt(window.getComputedStyle(body).fontSize);
+      body.style.fontSize = (current + 2) + "px";
+    };
+    document.getElementById("fontDec").onclick = function() {
+      const body = document.body;
+      let current = parseInt(window.getComputedStyle(body).fontSize);
+      if(current > 10) body.style.fontSize = (current - 2) + "px";
+    };
   </script>
 </body>
 </html>
