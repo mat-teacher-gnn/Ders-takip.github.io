@@ -154,7 +154,8 @@
       // Türkçe aylar
       const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
       const now = new Date();
-      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
+      // Tarih formatı "gün ay" şeklinde güncellendi
+      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]}`; 
       data[0].forEach((h, idx) => {
         const td = document.createElement("td");
         const input = document.createElement("input");
@@ -170,9 +171,10 @@
           input.inputMode = "numeric";
         }
 
-        // Güncellenen kısım: '.' ve 'Decimal' tuşlarına basıldığında bir sonraki input'a geçme
+        // Yeni eklenen kısım: '.' tuşuna veya sayısal tuş takımındaki '.' tuşuna basıldığında bir sonraki input'a geçme
         input.addEventListener("keydown", function(event) {
-          if (event.key === "." || event.key === "Decimal") { // Hem ana klavye hem de numerik tuş takımı için kontrol
+          // '.' (nokta) tuşu veya sayısal tuş takımındaki '.' tuşu algılandığında
+          if (event.key === "." || event.key === "NumpadDecimal") {
             event.preventDefault(); // Varsayılan "." karakterini yazmayı engelle
             const allInputs = Array.from(inputRow.querySelectorAll(".data-input"));
             const currentIndex = allInputs.indexOf(this);
@@ -193,7 +195,10 @@
         data[i].forEach((cell, idx) => {
           const td = document.createElement("td");
           if (idx === 0) {
-            td.textContent = cell.slice(0, -5); // İlk sütunda son 5 karakteri gösterme
+            // Mevcut verideki ISO tarih formatını "gün ay" formatına çevir
+            const dateFromCell = new Date(cell);
+            const formattedDate = `${dateFromCell.getDate()} ${aylar[dateFromCell.getMonth()]}`;
+            td.textContent = formattedDate;
           } else {
             td.textContent = cell;
           }
