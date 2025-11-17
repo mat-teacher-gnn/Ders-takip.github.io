@@ -169,6 +169,19 @@
           input.pattern = "[0-9]*";
           input.inputMode = "numeric";
         }
+
+        // Yeni eklenen kısım: '.' tuşuna basıldığında bir sonraki input'a geçme
+        input.addEventListener("keydown", function(event) {
+          if (event.key === ".") {
+            event.preventDefault(); // Varsayılan "." karakterini yazmayı engelle
+            const allInputs = Array.from(inputRow.querySelectorAll(".data-input"));
+            const currentIndex = allInputs.indexOf(this);
+            if (currentIndex > -1 && currentIndex < allInputs.length - 1) {
+              allInputs[currentIndex + 1].focus(); // Bir sonraki input'a odaklan
+            }
+          }
+        });
+
         td.appendChild(input);
         inputRow.appendChild(td);
       });
