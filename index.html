@@ -15,7 +15,7 @@
       background-image: url('resim1.png'); 
       background-position: center center; /* Ortalanır */
       background-repeat: no-repeat; /* Tekrar etmez */
-      background-size: contain; /* Oran bozulmadan ekrana sığar */
+      background-size: 100%; /* Oran bozulmadan ekrana sığar */
       background-attachment: fixed; /* Arka plan resmi sabit kalsın */
     }
     h1 { /* Başlık stil */
@@ -53,8 +53,8 @@
     table { /* Tablo genel stil - yazılara göre daraltıldı */
       border-collapse: collapse; /* Tablodaki hücre kenarlarını birleştirir, boşluk bırakmaz */
       margin: auto; /* Tabloyu yatayda ortalar */
-      width: 90%; /* Tablo genişliği yazılara göre daraltıldı */
-      max-width: 900px; /* Tablo maksimum 700px genişliğe ulaşabilir */
+      width: 90%; /* Tablo genişliği sayfanın %90'ı oldu */
+      max-width: 700px; /* Tablo maksimum 700px genişliğe ulaşabilir */
       background: #202935; /* Tablo arka plan rengini koyu mavi yapar */
       border-radius: 5px; /* Tablo köşelerini yuvarlatır */
       overflow: hidden; /* Taşan içerikleri gizler, köşe yuvarlatma düzgün görünür */
@@ -151,8 +151,6 @@
       // Boş satır (veri girişi) - EN ÜSTE
       const inputRow = document.createElement("tr");
       inputRow.id = "input-row";
-      // Zaman başlığının indexini bul
-      const zamanIndex = data[0].findIndex(h => h.toLowerCase().includes("zaman"));
       // Türkçe aylar
       const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
       const now = new Date();
@@ -161,8 +159,15 @@
         const td = document.createElement("td");
         const input = document.createElement("input");
         input.className = "data-input";
-        if (idx === zamanIndex) {
-          input.value = tarihStr;
+        if (idx === 0) {
+          input.type = "text";
+          input.value = tarihStr; // İlk hücre otomatik zaman verisiyle dolduruluyor
+          input.readOnly = true;
+          input.style.background = "#e0e0e0";
+        } else {
+          input.type = "number";
+          input.pattern = "[0-9]*";
+          input.inputMode = "numeric";
         }
         td.appendChild(input);
         inputRow.appendChild(td);
