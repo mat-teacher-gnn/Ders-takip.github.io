@@ -3,277 +3,92 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title> Halil hoca Öğrenci Takip sayfası </title>
+  <title>Yönetici Paneli</title>
+
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      background: #d8c6bc; 
-      color: #faf1f1; 
-      margin: 0; 
-      padding: 0; 
-      text-align: center; 
-      background-image: url('resim1.png'); 
-      background-position: center center; 
-      background-repeat: no-repeat; 
-      background-size: 100%; 
-      background-attachment: fixed; 
-    }
-    h1 { 
-      margin: 20px auto; 
-      padding: 10px 20px; 
-      background: #282828; 
-      color: #c1c1c9; 
-      border: 2px solid #007bff; 
-      border-radius: 5px; 
-      display: inline-block; 
-    }
-    #login { 
-      margin: 30px auto;
-      padding: 15px;
-      background: #282828; 
-      width: 90%;
-      max-width: 400px;
-      border-radius: 8px;
-    }
-    input { 
-      width: 80%;
-      padding: 18px;
-      margin-bottom: 10px;
-      background: #dddacf;
-      color: #202020;
-      border: 1px solid #7a2a2a;
-      border-radius: 5px;
-      text-align: center;
-    }
-    button { 
-      padding: 8px 20px;
-      background: #ff7b00;
-      border: 2px solid #007bff; 
-      border-radius: 6px;
-      cursor: pointer;
-      color: #fff;
-    }
-    button:hover { 
-      background: #009cd1;
-    }
-    table { 
-      border-collapse: collapse; 
-      margin: auto; 
-      width: 99%; 
-      max-width: 900px; 
-      background: #282828; 
-      border-radius: 5px; 
-      overflow: hidden; 
-      display: none; 
-    }
-    th, td { 
-      padding: 2px 2px; 
-      border: 1px solid #444444; 
-    }
-    th { 
-      background: #282828; 
-      color: #cea00a;
-      writing-mode: vertical-rl; 
-      transform: rotate(185deg); 
-    }
-    input.data-input { 
-      width: 100%;
-      background: #c5e7de;
-      color: #202020;
-      border: none;
-      text-align: center;
-      padding: 6px; 
-      font-size: 16px; 
-      height: 40px; 
-      box-sizing: border-box;
-    }
-    #saveBtn { 
-      margin-top: 10px;
-      padding: 10px 20px; font-size: 18px; 
-      background: #da7705;
-      border: 2px solid #282828; 
-      border-radius: 10px;
-      cursor: pointer;
-      color: #ffffff;
-      transition: 0.3s;
-      display: none;
-    }
-    #saveBtn:hover { 
-      background: #2981f3;
-    }
+    body { font-family: Arial; background:#121212; color:#fff; margin:0; padding:20px; text-align:center; }
+    h1 { color:#00e5ff; }
+
+    /* Şifre ekranı */
+    #loginBox { margin:40px auto; padding:20px; background:#1e1e1e; width:90%; max-width:360px; border-radius:10px; }
+    #loginBox input { width:90%; padding:12px; margin-top:10px; border:1px solid #555; background:#222; color:#fff; border-radius:6px; text-align:center; }
+    #loginBox button { margin-top:14px; padding:10px 20px; background:#00bcd4; border:none; color:#000; border-radius:6px; cursor:pointer; }
+
+    /* Panel */
+    #panel { display:none; margin-top:20px; }
+    select { padding:10px; border-radius:6px; background:#222; color:#fff; border:1px solid #666; }
+    table { border-collapse:collapse; width:95%; margin:20px auto; background:#1e1e1e; }
+    th,td { border:1px solid #333; padding:8px; }
+    th { background:#222; color:#00e5ff; }
   </style>
 </head>
 <body>
-  <h1>📚 LGS TAKİP SİSTEMİ 📚</h1>
 
-  <div id="login">
-    <input type="text" id="studentName" placeholder="Öğrenci ismini yaz..." />
-    <br />
-    <button id="openBtn">Giriş</button>
-  </div>
+<h1>📌 Yönetici Paneli</h1>
 
-  <button id="saveBtn">💾 Kaydet</button> 
-  <table id="data-table"></table>
+<!-- Giriş ekranı -->
+<div id="loginBox">
+  <h3>Yönetici Girişi</h3>
+  <input type="password" id="pass" placeholder="Şifreyi girin">
+  <button onclick="checkPass()">Giriş</button>
+</div>
 
-  <div style="margin-top:40px;">
-    <button id="fontInc" style="font-size:16px; padding:2px 8px;">A+</button>
-    <button id="fontDec" style="font-size:16px; padding:2px 8px;">A-</button>
-  </div>
+<!-- Yönetici paneli -->
+<div id="panel">
+  <h3>Sayfa Seç</h3>
+  <select id="sheetList"></select>
+  <button onclick="loadSheet()" style="margin-left:10px; padding:10px 20px;">Aç</button>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
-    let currentSheet = "";
+  <div id="tableWrap"></div>
+</div>
 
-    async function getSheetNames() {
-      const res = await fetch(API_URL + "?mode=sheets");
-      return res.json();
-    }
+<script>
+const REAL_PASSWORD = "yönetici.K2l5mXGjy";
+const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
 
-    async function getSheetData(sheetName) {
-      const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(sheetName));
-      return res.json();
-    }
+function checkPass(){
+  const p = document.getElementById("pass").value;
+  if(p === REAL_PASSWORD){
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("panel").style.display = "block";
+    loadSheetNames();
+  } else alert("Yanlış şifre!");
+}
 
-    function renderTable(data) {
-      const table = document.getElementById("data-table");
-      const saveBtn = document.getElementById("saveBtn");
-      table.innerHTML = "";
-      if (!data || data.length === 0) {
-        table.innerHTML = "<tr><td>Veri bulunamadı</td></tr>";
-        saveBtn.style.display = "none";
-        return;
-      }
+async function loadSheetNames(){
+  const res = await fetch(API_URL + "?mode=sheets");
+  const data = await res.json();
+  const sel = document.getElementById("sheetList");
+  sel.innerHTML = "";
+  data.sheets.forEach(s=>{
+    const op = document.createElement("option");
+    op.value = s;
+    op.textContent = s;
+    sel.appendChild(op);
+  });
+}
 
-      const header = document.createElement("tr");
-      data[0].forEach(h => {
-        const th = document.createElement("th");
-        th.textContent = h;
-        header.appendChild(th);
-      });
-      table.appendChild(header);
+async function loadSheet(){
+  const name = document.getElementById("sheetList").value;
+  const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(name));
+  const data = await res.json();
+  renderTable(data.values);
+}
 
-      const inputRow = document.createElement("tr");
-      inputRow.id = "input-row";
-      const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-      const now = new Date();
-      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
-      data[0].forEach((h, idx) => {
-        const td = document.createElement("td");
-        const input = document.createElement("input");
-        input.className = "data-input";
-        if (idx === 0) {
-          input.type = "text";
-          input.value = tarihStr;
-          input.readOnly = true;
-          input.style.background = "#e0e0e0";
-        } else {
-          input.type = "number";
-          input.pattern = "[0-9]*";
-          input.inputMode = "numeric";
-        }
-
-        input.addEventListener("keydown", function(event) {
-          if (event.key === "." || event.key === "NumpadDecimal") {
-            event.preventDefault();
-            const allInputs = Array.from(inputRow.querySelectorAll(".data-input"));
-            const currentIndex = allInputs.indexOf(this);
-            if (currentIndex > -1 && currentIndex < allInputs.length - 1) {
-              allInputs[currentIndex + 1].focus();
-            }
-          }
-        });
-
-        td.appendChild(input);
-        inputRow.appendChild(td);
-      });
-      table.appendChild(inputRow);
-
-      for (let i = data.length - 1; i > 0; i--) {
-        const tr = document.createElement("tr");
-        data[i].forEach((cell, idx) => {
-          const td = document.createElement("td");
-          if (idx === 0) {
-            const dateFromCell = new Date(cell);
-            const formattedDate = `${dateFromCell.getDate()} ${aylar[dateFromCell.getMonth()]}`;
-            td.textContent = formattedDate;
-          } else {
-            td.textContent = cell;
-          }
-          tr.appendChild(td);
-        });
-        table.appendChild(tr);
-      }
-
-      table.style.display = "table";
-      saveBtn.style.display = "inline-block";
-    }
-
-    async function saveData() {
-      const saveBtn = document.getElementById("saveBtn");
-      saveBtn.disabled = true;
-      const inputs = document.querySelectorAll("#input-row input");
-      const values = Array.from(inputs).map(i => i.value.trim());
-      if (values.every(v => v === "")) {
-        alert("Lütfen veri girin.");
-        saveBtn.disabled = false;
-        return;
-      }
-
-      const body = new URLSearchParams();
-      body.append("mode", "append");
-      body.append("sheet", currentSheet);
-      body.append("data", JSON.stringify(values));
-
-      const res = await fetch(API_URL, { method: "POST", body });
-      const result = await res.json();
-      alert(result.message || "Veri eklendi!");
-      loadSheet(currentSheet);
-    }
-
-    async function loadSheet(name) {
-      currentSheet = name;
-      const data = await getSheetData(name);
-      renderTable(data);
-    }
-
-    async function openSheet() {
-      const name = document.getElementById("studentName").value.trim();
-      if (!name) {
-        alert("Lütfen bir isim girin.");
-        return;
-      }
-      localStorage.setItem("lastStudentName", name);
-      const sheets = await getSheetNames();
-      if (!sheets.includes(name)) {
-        alert(`${name} adında bir sayfa bulunamadı.`);
-        return;
-      }
-      document.getElementById("login").style.display = "none";
-      loadSheet(name);
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-      const studentInput = document.getElementById("studentName");
-      const lastStudent = localStorage.getItem("lastStudentName") || "";
-      if (lastStudent) {
-        studentInput.value = lastStudent;
-        studentInput.placeholder = lastStudent;
-      }
+function renderTable(values){
+  let html = "<table>";
+  values.forEach((row,i)=>{
+    html += "<tr>";
+    row.forEach(cell=>{
+      if(i===0) html += `<th>${cell}</th>`;
+      else html += `<td>${cell}</td>`;
     });
+    html += "</tr>";
+  });
+  html += "</table>";
+  document.getElementById("tableWrap").innerHTML = html;
+}
+</script>
 
-    document.getElementById("openBtn").onclick = openSheet;
-    document.getElementById("saveBtn").onclick = saveData;
-
-    document.getElementById("fontInc").onclick = function() {
-      const body = document.body;
-      let current = parseInt(window.getComputedStyle(body).fontSize);
-      body.style.fontSize = (current + 2) + "px";
-    };
-    document.getElementById("fontDec").onclick = function() {
-      const body = document.body;
-      let current = parseInt(window.getComputedStyle(body).fontSize);
-      if(current > 10) body.style.fontSize = (current - 2) + "px";
-    };
-  </script>
 </body>
 </html>
