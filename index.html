@@ -160,8 +160,8 @@
       // Türkçe aylar
       const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
       const now = new Date();
-      // Tarih formatı "gün ay" şeklinde güncellendi
-      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]}`; 
+      // Tarih formatı "gün ay saat:dakika" şeklinde güncellendi (Yeni giriş için zaman bilgisi korunur)
+      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
       data[0].forEach((h, idx) => {
         const td = document.createElement("td");
         const input = document.createElement("input");
@@ -201,7 +201,7 @@
         data[i].forEach((cell, idx) => {
           const td = document.createElement("td");
           if (idx === 0) {
-            // Mevcut verideki ISO tarih formatını "gün ay" formatına çevir
+            // Mevcut verideki ISO tarih formatını "gün ay" formatına çevir (Saat ve dakika kaldırıldı)
             const dateFromCell = new Date(cell);
             const formattedDate = `${dateFromCell.getDate()} ${aylar[dateFromCell.getMonth()]}`;
             td.textContent = formattedDate;
