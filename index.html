@@ -8,7 +8,7 @@
     body { /* Sayfa genel stil */
       font-family: Arial, sans-serif; /* Yazı tipi ailesi */
       background: #d8c6bc; /* Sayfa arka plan rengi */
-      color: #eee; /* Sayfa yazı rengi */
+      color: #faf1f1; /* Sayfa yazı rengi */
       margin: 0; /* Sayfa kenar boşluğu */
       padding: 0; /* Sayfa iç boşluğu */
       text-align: center; /* Tüm içerikleri ortalar */
@@ -19,12 +19,18 @@
       background-attachment: fixed; /* Arka plan resmi sabit kalsın */
     }
     h1 { /* Başlık stil */
-      margin: 20px 0; color: #1e2c30;
+      margin: 20px auto; /* Başlığı yatayda ortalar */
+      padding: 10px 20px; /* İç boşluk ekler */
+      background: #282828; /* Dumanlı siyah arka plan */
+      color: #c1c1c9; /* Tablo başlık hücresi yazı rengiyle uyumlu */
+      border: 2px solid #007bff; /* Kontrast bir kenarlık */
+      border-radius: 5px; /* Kenarlık köşelerini yuvarlar */
+      display: inline-block; /* İçeriğe göre genişlemesini sağlar ve margin auto çalışır */
     }
     #login { /* Giriş kutusu stil */
       margin: 30px auto;
       padding: 15px;
-      background: #1e1e1e;
+      background: #282828; /* Dumanlı siyah arka plan */
       width: 90%;
       max-width: 400px;
       border-radius: 8px;
@@ -34,7 +40,7 @@
       padding: 18px;
       margin-bottom: 10px;
       background: #dddacf;
-      color: #030225;
+      color: #202020;
       border: 1px solid #7a2a2a;
       border-radius: 5px;
       text-align: center;
@@ -42,7 +48,7 @@
     button { /* Tüm butonlar */
       padding: 8px 20px;
       background: #ff7b00;
-      border: none;
+      border: 2px solid #007bff; /* Mavi kenarlık eklendi */
       border-radius: 6px;
       cursor: pointer;
       color: #fff;
@@ -55,17 +61,17 @@
       margin: auto; /* Tabloyu yatayda ortalar */
       width: 99%; /* Tablo genişliği sayfanın %90'ı oldu */
       max-width: 900px; /* Tablo maksimum 700px genişliğe ulaşabilir */
-      background: #202935; /* Tablo arka plan rengini koyu mavi yapar */
+      background: #282828; /* Dumanlı siyah arka plan */
       border-radius: 5px; /* Tablo köşelerini yuvarlatır */
       overflow: hidden; /* Taşan içerikleri gizler, köşe yuvarlatma düzgün görünür */
       display: none; /* Tabloyu başlangıçta gizler, JS ile gösterilir */
     }
     th, td { /* Tablo hücreleri - yazıdan 2px daha geniş */
       padding: 2px 2px; /* 12px yerine 14px ile 2px daha geniş */
-      border: 1px solid #444;
+      border: 1px solid #444444; /* Dumanlı siyah tonunda kenarlık */
     }
     th { /* Tablo başlık hücresi */
-      background: #222;
+      background: #282828; /* Dumanlı siyah arka plan */
       color: #cea00a;
       writing-mode: vertical-rl; /* Yazıları dikey döndür */
       transform: rotate(185deg); /* Yazı yönünü düzelt */
@@ -73,7 +79,7 @@
     input.data-input { /* Tablo veri girişi inputları */
       width: 100%;
       background: #91fae0;
-      color: #0c0000;
+      color: #202020;
       border: none;
       text-align: center;
       padding: 6px; /* Yüksekliği artırıldı */
@@ -85,10 +91,10 @@
       margin-top: 10px;
       padding: 10px 20px; font-size: 18px; 
       background: #da7705;
-      border: 2px;
+      border: 2px solid #282828; /* Dumanlı siyah kenarlık */
       border-radius: 10px;
       cursor: pointer;
-      color: #fff;
+      color: #ffffff;
       transition: 0.3s;
       display: none;
     }
@@ -98,7 +104,7 @@
   </style>
 </head>
 <body>
-  <h1>📚 Öğrenci Takip otomasyonu</h1>
+  <h1>📚 LGS TAKİP SİSTEMİ 📚</h1>
 
   <div id="login">
     <input type="text" id="studentName" placeholder="Öğrenci ismini yaz..." />
