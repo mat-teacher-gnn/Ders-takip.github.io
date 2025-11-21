@@ -3,115 +3,108 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title> Halil hoca Öğrenci Takip sayfası </title>
+  <title>VERİ Görüntüleme </title>
   <style>
-    body { /* Sayfa genel stil */
-      font-family: Arial, sans-serif; /* Yazı tipi ailesi */
-      background: #d8c6bc; /* Sayfa arka plan rengi */
-      color: #faf1f1; /* Sayfa yazı rengi */
-      margin: 0; /* Sayfa kenar boşluğu */
-      padding: 0; /* Sayfa iç boşluğu */
-      text-align: center; /* Tüm içerikleri ortalar */
-      background-image: url('resim1.png'); 
-      background-position: center center; /* Ortalanır */
-      background-repeat: no-repeat; /* Tekrar etmez */
-      background-size: 100%; /* Oran bozulmadan ekrana sığar */
-      background-attachment: fixed; /* Arka plan resmi sabit kalsın */
-    }
-    h1 { /* Başlık stil */
-      margin: 20px auto; /* Başlığı yatayda ortalar */
-      padding: 10px 20px; /* İç boşluk ekler */
-      background: #282828; /* Dumanlı siyah arka plan */
-      color: #c1c1c9; /* Tablo başlık hücresi yazı rengiyle uyumlu */
-      border: 2px solid #007bff; /* Kontrast bir kenarlık */
-      border-radius: 5px; /* Kenarlık köşelerini yuvarlar */
-      display: inline-block; /* İçeriğe göre genişlemesini sağlar ve margin auto çalışır */
-    }
-    #login { /* Giriş kutusu stil */
-      margin: 30px auto;
-      padding: 15px;
-      background: #282828; /* Dumanlı siyah arka plan */
-      width: 90%;
-      max-width: 400px;
-      border-radius: 8px;
-    }
-    input { /* Giriş kutusu input stil */
-      width: 80%;
-      padding: 18px;
-      margin-bottom: 10px;
-@@ -45,60 +45,60 @@
-      border-radius: 5px;
+    body {
+      font-family: Arial, Bold, sans-serif;
+      background: #d8c6bc; /* Arka plan rengi önceki dosyaya göre ayarlandı */
+      color: #b8e9f8;
+      margin: 0;
+      padding: 0;
       text-align: center;
+      background-position: top center;
+      /*background-repeat: no-repeat;*/
+      background-size: 100%;
+      background-attachment: fixed;
     }
-    button { /* Tüm butonlar */
-      padding: 8px 20px;
-      background: #ff7b00;
-      border: 2px solid #007bff; /* Mavi kenarlık eklendi */
-      border-radius: 6px;
+    h1 { margin: 20px 0; color: #00c3ff; }
+    #tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    #loading-message { /* 'Yükleniyor...' yazısı için stil */
+      background: #333; /* Koyu arka plan */
+      color: #fff; /* Beyaz metin rengi */
+      padding: 10px 20px; /* Dolgu */
+      border-radius: 8px; /* Köşe yuvarlaklığı */
+      display: inline-block; /* Dolgu ve arka planın düzgün görünmesini sağlar */
+    }
+    .tab {
+      background: #333;
+      padding: 10px 20px;
+      border-radius: 8px;
       cursor: pointer;
       color: #fff;
+      transition: 0.3s;
     }
-    button:hover { /* Buton hover efekti */
-      background: #009cd1;
+    .tab:hover { background: #30c1db; }
+    .active { background: #00c3ff; }
+    table {
+      border-collapse: collapse;
+      margin: auto;
+      width: 95%;
+      background: #1e1e1e;
+      border-radius: 10px;
+      overflow: hidden;
     }
-    table { /* Tablo genel stil - yazılara göre daraltıldı */
-      border-collapse: collapse; /* Tablodaki hücre kenarlarını birleştirir, boşluk bırakmaz */
-      margin: auto; /* Tabloyu yatayda ortalar */
-      width: 99%; /* Tablo genişliği sayfanın %90'ı oldu */
-      max-width: 900px; /* Tablo maksimum 700px genişliğe ulaşabilir */
-      background: #282828; /* Dumanlı siyah arka plan */
-      border-radius: 5px; /* Tablo köşelerini yuvarlatır */
-      overflow: hidden; /* Taşan içerikleri gizler, köşe yuvarlatma düzgün görünür */
-      display: none; /* Tabloyu başlangıçta gizler, JS ile gösterilir */
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #444;
     }
-    th, td { /* Tablo hücreleri - yazıdan 2px daha geniş */
-      padding: 2px 2px; /* 12px yerine 14px ile 2px daha geniş */
-      border: 1px solid #444444; /* Dumanlı siyah tonunda kenarlık */
+    th {
+      background: #222;
+      color: #00c3ff;
     }
-    th { /* Tablo başlık hücresi */
-      background: #282828; /* Dumanlı siyah arka plan */
-      color: #cea00a;
-      writing-mode: vertical-rl; /* Yazıları dikey döndür */
-      transform: rotate(185deg); /* Yazı yönünü düzelt */
-    }
-    input.data-input { /* Tablo veri girişi inputları */
+    input {
       width: 100%;
-      background: #c5e7de;
-      color: #202020;
+      background: #222;
+      color: #fff;
       border: none;
       text-align: center;
-      padding: 6px; /* Yüksekliği artırıldı */
-      font-size: 16px; /* Yazı büyütüldü */
-      height: 40px; /* Kutu yüksekliği artırıldı */
-      box-sizing: border-box;
-    }
-    #saveBtn { /* Kaydet butonu */
-      margin-top: 10px;
-      padding: 10px 20px; font-size: 18px; 
-      background: #da7705;
-      border: 2px solid #282828; /* Dumanlı siyah kenarlık */
-      border-radius: 10px;
-      cursor: pointer;
-      color: #ffffff;
-      transition: 0.3s;
-      display: none;
-    }
-    #saveBtn:hover { /* Kaydet butonu hover */
-      background: #2981f3;
+      padding: 6px;
     }
   </style>
-@@ -112,10 +112,9 @@
-    <button id="openBtn">Giriş</button>
-  </div>
-
-  <button id="saveBtn">💾 Kaydet</button> <!-- Kaydet butonu tablo üstüne taşındı -->
+</head>
+<body>
+  <h1> ders takip öğrenci listeleri</h1>
+  <div id="tabs"><span id="loading-message">Yükleniyor...</span></div>
   <table id="data-table"></table>
 
-  <!-- Sayfa en altına font boyutu ayarlama butonları -->
-  <div style="margin-top:40px;">
-    <button id="fontInc" style="font-size:16px; padding:2px 8px;">A+</button>
-    <button id="fontDec" style="font-size:16px; padding:2px 8px;">A-</button>
-@@ -145,7 +144,6 @@
+  <script>
+    // Arka plan resim döngüsü için değişkenler ve fonksiyonlar
+    const imagePaths = [];
+    for (let i = 1; i <= 152; i++) {
+        imagePaths.push(`Resim  (${i}).jpeg`);
+    }
+
+    function changeBackgroundImage(randomIndex) {
+        document.body.style.backgroundImage = `url('${imagePaths[randomIndex]}')`;
+    }
+// Arka plan resmini rastgele seç ve ayarla
+      const randomIndex = Math.floor(Math.random() * imagePaths.length);
+      changeBackgroundImage(randomIndex);
+
+ const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
+    let currentSheet = "";
+
+    async function getSheetNames() {
+      const res = await fetch(API_URL + "?mode=sheets");
+      return res.json();
+    }
+
+    async function getSheetData(sheetName) {
+      const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(sheetName));
+      return res.json();
+    }
+
+    function renderTable(data) {
+      const table = document.getElementById("data-table");
+      table.innerHTML = "";
+      if (!data || data.length === 0) {
+        table.innerHTML = "<tr><td>Veri bulunamadı</td></tr>";
         return;
       }
 
@@ -119,76 +112,61 @@
       const header = document.createElement("tr");
       data[0].forEach(h => {
         const th = document.createElement("th");
-@@ -154,21 +152,18 @@
+        th.textContent = h;
+        header.appendChild(th);
       });
       table.appendChild(header);
 
-      // Boş satır (veri girişi) - EN ÜSTE
-      const inputRow = document.createElement("tr");
-      inputRow.id = "input-row";
-      // Türkçe aylar
-      const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-      const now = new Date();
-      // Tarih formatı "gün ay saat:dakika" şeklinde güncellendi (Yeni giriş için zaman bilgisi korunur)
-      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
-      data[0].forEach((h, idx) => {
-        const td = document.createElement("td");
-        const input = document.createElement("input");
-        input.className = "data-input";
-        if (idx === 0) {
-          input.type = "text";
-          input.value = tarihStr; // İlk hücre otomatik zaman verisiyle dolduruluyor
-          input.readOnly = true;
-          input.style.background = "#e0e0e0";
-        } else {
-@@ -177,15 +172,13 @@
-          input.inputMode = "numeric";
-        }
-
-        // Yeni eklenen kısım: '.' tuşuna veya sayısal tuş takımındaki '.' tuşuna basıldığında bir sonraki input'a geçme
-        input.addEventListener("keydown", function(event) {
-          // '.' (nokta) tuşu veya sayısal tuş takımındaki '.' tuşu algılandığında
-          if (event.key === "." || event.key === "NumpadDecimal") {
-            event.preventDefault(); // Varsayılan "." karakterini yazmayı engelle
-            const allInputs = Array.from(inputRow.querySelectorAll(".data-input"));
-            const currentIndex = allInputs.indexOf(this);
-            if (currentIndex > -1 && currentIndex < allInputs.length - 1) {
-              allInputs[currentIndex + 1].focus(); // Bir sonraki input'a odaklan
-            }
-          }
-        });
-@@ -195,13 +188,11 @@
-      });
-      table.appendChild(inputRow);
-
       // Veri satırları
-      for (let i = data.length - 1; i > 0; i--) {
+      for (let i = 1; i < data.length; i++) {
         const tr = document.createElement("tr");
         data[i].forEach((cell, idx) => {
           const td = document.createElement("td");
-          if (idx === 0) {
-            // Mevcut verideki ISO tarih formatını "gün ay" formatına çevir (Saat ve dakika kaldırıldı)
-            const dateFromCell = new Date(cell);
-            const formattedDate = `${dateFromCell.getDate()} ${aylar[dateFromCell.getMonth()]}`;
-            td.textContent = formattedDate;
-@@ -219,12 +210,12 @@
 
-    async function saveData() {
-      const saveBtn = document.getElementById("saveBtn");
-      saveBtn.disabled = true; // Butona basıldığı anda deaktif
-      const inputs = document.querySelectorAll("#input-row input");
-      const values = Array.from(inputs).map(i => i.value.trim());
-      if (values.every(v => v === "")) {
-        alert("Lütfen veri girin.");
-        saveBtn.disabled = false; // Veri yoksa tekrar aktif
-        return;
+          if (idx === 0) { // İlk sütun (Tarih) için özel formatlama
+            const dateObj = new Date(cell);
+            const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            td.textContent = `${dateObj.getDate()} ${aylar[dateObj.getMonth()]}`;
+          } else {
+            td.textContent = cell;
+          }
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
       }
+    }
 
-@@ -251,7 +242,7 @@
-        alert("Lütfen bir isim girin.");
-        return;
-      }
-      localStorage.setItem("lastStudentName", name); // Son girilen ismi kaydet
-      const sheets = await getSheetNames();
-      if (!sheets.includes(name)) {
-        alert(`${name} adında bir sayfa bulunamadı.`);
+    async function loadSheet(name) {
+      currentSheet = name;
+      const data = await getSheetData(name);
+      renderTable(data);
+    }
+
+    async function init() {
+      const tabsDiv = document.getElementById("tabs");
+      const sheetNames = await getSheetNames();
+
+      
+      tabsDiv.innerHTML = "";
+      sheetNames.forEach((name, i) => {
+        const tab = document.createElement("div");
+        tab.textContent = name;
+        tab.className = "tab" + (i === 0 ? " active" : "");
+        tab.onclick = async () => {
+          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          loadSheet(name);
+        };
+        tabsDiv.appendChild(tab);
+      });
+
+      if (sheetNames.length > 0) loadSheet(sheetNames[0]);
+    }
+
+    init().catch(err => {
+      console.error(err);
+      document.getElementById("tabs").textContent = "Bağlantı hatası!";
+    });
+  </script>
+</body>
+</html>
