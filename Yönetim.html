@@ -18,6 +18,23 @@
       background-attachment: fixed;
     }
     h1 { margin: 20px 0; color: #00c3ff; }
+    #controls { /* Yeni butonlar için stil */
+      margin-bottom: 20px;
+    }
+    .control-button { /* Yeni butonlar için ortak stil */
+      background: #007bff; /* Mavi tonu */
+      color: #fff;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      margin: 0 5px;
+      transition: background 0.3s;
+    }
+    .control-button:hover {
+      background: #0056b3; /* Daha koyu mavi */
+    }
     #tabs {
       display: flex;
       justify-content: center;
@@ -70,14 +87,19 @@
 </head>
 <body>
   <h1> ders takip öğrenci listeleri</h1>
+  <div id="controls">
+    <button id="show-first-three-columns" class="control-button">İlk 3 Sütunu Göster</button>
+    <button id="show-all-columns" class="control-button">Tüm Sütunları Göster</button>
+  </div>
   <div id="tabs"><span id="loading-message">Yükleniyor...</span></div>
   <table id="data-table"></table>
 
   <script>
+    // filepath: c:\Users\beyef\Downloads\öğrenci takip\Yönetim1.html
     // Arka plan resim döngüsü için değişkenler ve fonksiyonlar
     const imagePaths = [];
     for (let i = 1; i <= 152; i++) {
-        imagePaths.push(`resim(${i}).webp`);
+        imagePaths.push(`Resim  (${i}).jpeg`);
     }
 
     function changeBackgroundImage(randomIndex) {
@@ -87,8 +109,9 @@
       const randomIndex = Math.floor(Math.random() * imagePaths.length);
       changeBackgroundImage(randomIndex);
 
- const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
     let currentSheet = "";
+    let currentSheetData = []; // Yeni: Mevcut sayfanın tüm verisini tutacak
 
     async function getSheetNames() {
       const res = await fetch(API_URL + "?mode=sheets");
@@ -100,6 +123,7 @@
       return res.json();
     }
 
+    // Bu fonksiyon tüm veriyi render eder (mevcut fonksiyonunuz)
     function renderTable(data) {
       const table = document.getElementById("data-table");
       table.innerHTML = "";
@@ -124,9 +148,17 @@
           const td = document.createElement("td");
 
           if (idx === 0) { // İlk sütun (Tarih) için özel formatlama
-            const dateObj = new Date(cell);
-            const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-            td.textContent = `${dateObj.getDate()} ${aylar[dateObj.getMonth()]}`;
+            try {
+                const dateObj = new Date(cell);
+                if (!isNaN(dateObj.getTime())) { // Geçerli bir tarih mi kontrol et
+                    const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+                    td.textContent = `${dateObj.getDate()} ${aylar[dateObj.getMonth()]}`;
+                } else {
+                    td.textContent = cell; // Geçersiz tarihse orijinal değeri göster
+                }
+            } catch (e) {
+                td.textContent = cell; // Hata durumunda orijinal değeri göster
+            }
           } else {
             td.textContent = cell;
           }
@@ -136,17 +168,65 @@
       }
     }
 
+    // Yeni: Sadece belirli sütunları render eden fonksiyon
+    function renderSelectedColumns(data, columnIndices) {
+        const table = document.getElementById("data-table");
+        table.innerHTML = "";
+        if (!data || data.length === 0 || !data[0]) {
+            table.innerHTML = "<tr><td>Gösterilecek veri bulunamadı veya tablo başlığı eksik.</td></tr>";
+            return;
+        }
+
+        // Başlık satırı
+        const header = document.createElement("tr");
+        columnIndices.forEach(colIdx => {
+            if (data[0][colIdx] !== undefined) { // Sütun başlığının varlığını kontrol et
+                const th = document.createElement("th");
+                th.textContent = data[0][colIdx];
+                header.appendChild(th);
+            }
+        });
+        table.appendChild(header);
+
+        // Veri satırları
+        for (let i = 1; i < data.length; i++) {
+            const tr = document.createElement("tr");
+            columnIndices.forEach(colIdx => {
+                const td = document.createElement("td");
+                const cell = data[i][colIdx];
+
+                if (colIdx === 0 && cell) { // İlk sütun (Tarih) için özel formatlama
+                    try {
+                        const dateObj = new Date(cell);
+                        if (!isNaN(dateObj.getTime())) { // Geçerli bir tarih mı kontrol et
+                            const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+                            td.textContent = `${dateObj.getDate()} ${aylar[dateObj.getMonth()]}`;
+                        } else {
+                            td.textContent = cell; // Geçersiz tarihse orijinal değeri göster
+                        }
+                    } catch (e) {
+                        td.textContent = cell; // Hata durumunda orijinal değeri göster
+                    }
+                } else {
+                    td.textContent = cell || ''; // Hücre boşsa boş string göster
+                }
+                tr.appendChild(td);
+            });
+            table.appendChild(tr);
+        }
+    }
+
     async function loadSheet(name) {
       currentSheet = name;
       const data = await getSheetData(name);
-      renderTable(data);
+      currentSheetData = data; // Veriyi global değişkende sakla
+      renderTable(data); // Varsayılan olarak tüm sütunları göster
     }
 
     async function init() {
       const tabsDiv = document.getElementById("tabs");
       const sheetNames = await getSheetNames();
 
-      
       tabsDiv.innerHTML = "";
       sheetNames.forEach((name, i) => {
         const tab = document.createElement("div");
@@ -155,12 +235,29 @@
         tab.onclick = async () => {
           document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
           tab.classList.add("active");
-          loadSheet(name);
+          loadSheet(name); // loadSheet şimdi currentSheetData'yı güncelliyor ve renderTable çağırıyor
         };
         tabsDiv.appendChild(tab);
       });
 
       if (sheetNames.length > 0) loadSheet(sheetNames[0]);
+
+      // Buton olay dinleyicilerini burada ekle
+      document.getElementById("show-first-three-columns").onclick = () => {
+          if (currentSheetData && currentSheetData.length > 0) {
+              renderSelectedColumns(currentSheetData, [0, 1, 2]); // İlk üç sütunu göster (0-indexed)
+          } else {
+              document.getElementById("data-table").innerHTML = "<tr><td>Gösterilecek veri bulunamadı. Lütfen önce bir sayfa seçin.</td></tr>";
+          }
+      };
+
+      document.getElementById("show-all-columns").onclick = () => {
+          if (currentSheetData && currentSheetData.length > 0) {
+              renderTable(currentSheetData); // Tüm sütunları göster
+          } else {
+              document.getElementById("data-table").innerHTML = "<tr><td>Gösterilecek veri bulunamadı. Lütfen önce bir sayfa seçin.</td></tr>";
+          }
+      };
     }
 
     init().catch(err => {
