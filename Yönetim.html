@@ -1,137 +1,3 @@
-Skip to content
-Navigation Menu
-mat-teacher-gnn
-Ders-takip.github.io
-
-Type / to search
-Code
-Pull requests
-Actions
-Security
-Insights
-Settings
-Files
-Go to file
-t
-Yönetim.html
-index.html
-resim(1).jpeg
-resim(1).webp
-resim(10).webp
-resim(11).webp
-resim(12).webp
-resim(13).webp
-resim(14).webp
-resim(15).webp
-resim(16).webp
-resim(17).webp
-resim(18).webp
-resim(2).jpeg
-resim(2).webp
-resim(3).webp
-resim(4).webp
-resim(6).webp
-resim(7).webp
-resim(8).webp
-resim(9).webp
-resim1.png
-Ders-takip.github.io
-/
-Yönetim.html
-in
-main
-
-Edit
-
-Preview
-Indent mode
-
-Spaces
-Indent size
-
-2
-Line wrap mode
-
-No wrap
-Editing Yönetim.html file contents
-1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73
-74
-75
-76
-77
-78
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -152,23 +18,6 @@ Editing Yönetim.html file contents
       background-attachment: fixed;
     }
     h1 { margin: 20px 0; color: #00c3ff; }
-    #controls { /* Yeni butonlar için stil */
-      margin-bottom: 20px;
-    }
-    .control-button { /* Yeni butonlar için ortak stil */
-      background: #007bff; /* Mavi tonu */
-      color: #fff;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1em;
-      margin: 0 5px;
-      transition: background 0.3s;
-    }
-    .control-button:hover {
-      background: #0056b3; /* Daha koyu mavi */
-    }
     #tabs {
       display: flex;
       justify-content: center;
@@ -210,5 +59,114 @@ Editing Yönetim.html file contents
       color: #00c3ff;
     }
     input {
-Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
- 
+      width: 100%;
+      background: #222;
+      color: #fff;
+      border: none;
+      text-align: center;
+      padding: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1> ders takip öğrenci listeleri</h1>
+  <div id="tabs"><span id="loading-message">Yükleniyor...</span></div>
+  <table id="data-table"></table>
+
+  <script>
+    // Arka plan resim döngüsü için değişkenler ve fonksiyonlar
+    const imagePaths = [];
+    for (let i = 1; i <= 152; i++) {
+        imagePaths.push(`Resim  (${i}).jpeg`);
+    }
+
+    function changeBackgroundImage(randomIndex) {
+        document.body.style.backgroundImage = `url('${imagePaths[randomIndex]}')`;
+    }
+// Arka plan resmini rastgele seç ve ayarla
+      const randomIndex = Math.floor(Math.random() * imagePaths.length);
+      changeBackgroundImage(randomIndex);
+
+ const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
+    let currentSheet = "";
+
+    async function getSheetNames() {
+      const res = await fetch(API_URL + "?mode=sheets");
+      return res.json();
+    }
+
+    async function getSheetData(sheetName) {
+      const res = await fetch(API_URL + "?sheet=" + encodeURIComponent(sheetName));
+      return res.json();
+    }
+
+    function renderTable(data) {
+      const table = document.getElementById("data-table");
+      table.innerHTML = "";
+      if (!data || data.length === 0) {
+        table.innerHTML = "<tr><td>Veri bulunamadı</td></tr>";
+        return;
+      }
+
+      // Başlık satırı
+      const header = document.createElement("tr");
+      data[0].forEach(h => {
+        const th = document.createElement("th");
+        th.textContent = h;
+        header.appendChild(th);
+      });
+      table.appendChild(header);
+
+      // Veri satırları
+      for (let i = 1; i < data.length; i++) {
+        const tr = document.createElement("tr");
+        data[i].forEach((cell, idx) => {
+          const td = document.createElement("td");
+
+          if (idx === 0) { // İlk sütun (Tarih) için özel formatlama
+            const dateObj = new Date(cell);
+            const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+            td.textContent = `${dateObj.getDate()} ${aylar[dateObj.getMonth()]}`;
+          } else {
+            td.textContent = cell;
+          }
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      }
+    }
+
+    async function loadSheet(name) {
+      currentSheet = name;
+      const data = await getSheetData(name);
+      renderTable(data);
+    }
+
+    async function init() {
+      const tabsDiv = document.getElementById("tabs");
+      const sheetNames = await getSheetNames();
+
+      
+      tabsDiv.innerHTML = "";
+      sheetNames.forEach((name, i) => {
+        const tab = document.createElement("div");
+        tab.textContent = name;
+        tab.className = "tab" + (i === 0 ? " active" : "");
+        tab.onclick = async () => {
+          document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          loadSheet(name);
+        };
+        tabsDiv.appendChild(tab);
+      });
+
+      if (sheetNames.length > 0) loadSheet(sheetNames[0]);
+    }
+
+    init().catch(err => {
+      console.error(err);
+      document.getElementById("tabs").textContent = "Bağlantı hatası!";
+    });
+  </script>
+</body>
+</html>
