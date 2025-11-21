@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> Halil hoca Öğrenci Takip sayfası </title>
+  <style>
+    body { /* Sayfa genel stil */
+      font-family: Arial, sans-serif; /* Yazı tipi ailesi */
+      background: #d8c6bc; /* Sayfa arka plan rengi */
+      color: #faf1f1; /* Sayfa yazı rengi */
+      margin: 0; /* Sayfa kenar boşluğu */
+      padding: 0; /* Sayfa iç boşluğu */
+      text-align: center; /* Tüm içerikleri ortalar */
+      background-image: url('resim1.png'); 
+      background-position: center center; /* Ortalanır */
+      background-repeat: no-repeat; /* Tekrar etmez */
+      background-size: 100%; /* Oran bozulmadan ekrana sığar */
+      background-attachment: fixed; /* Arka plan resmi sabit kalsın */
+    }
+    h1 { /* Başlık stil */
+      margin: 20px auto; /* Başlığı yatayda ortalar */
+      padding: 10px 20px; /* İç boşluk ekler */
+      background: #282828; /* Dumanlı siyah arka plan */
+      color: #c1c1c9; /* Tablo başlık hücresi yazı rengiyle uyumlu */
+      border: 2px solid #007bff; /* Kontrast bir kenarlık */
+      border-radius: 5px; /* Kenarlık köşelerini yuvarlar */
+      display: inline-block; /* İçeriğe göre genişlemesini sağlar ve margin auto çalışır */
+    }
+    #login { /* Giriş kutusu stil */
+      margin: 30px auto;
+      padding: 15px;
+      background: #282828; /* Dumanlı siyah arka plan */
+      width: 90%;
+      max-width: 400px;
+      border-radius: 8px;
+    }
+    input { /* Giriş kutusu input stil */
+      width: 80%;
+      padding: 18px;
+      margin-bottom: 10px;
+@@ -45,60 +45,60 @@
+      border-radius: 5px;
+      text-align: center;
+    }
+    button { /* Tüm butonlar */
+      padding: 8px 20px;
+      background: #ff7b00;
+      border: 2px solid #007bff; /* Mavi kenarlık eklendi */
+      border-radius: 6px;
+      cursor: pointer;
+      color: #fff;
+    }
+    button:hover { /* Buton hover efekti */
+      background: #009cd1;
+    }
+    table { /* Tablo genel stil - yazılara göre daraltıldı */
+      border-collapse: collapse; /* Tablodaki hücre kenarlarını birleştirir, boşluk bırakmaz */
+      margin: auto; /* Tabloyu yatayda ortalar */
+      width: 99%; /* Tablo genişliği sayfanın %90'ı oldu */
+      max-width: 900px; /* Tablo maksimum 700px genişliğe ulaşabilir */
+      background: #282828; /* Dumanlı siyah arka plan */
+      border-radius: 5px; /* Tablo köşelerini yuvarlatır */
+      overflow: hidden; /* Taşan içerikleri gizler, köşe yuvarlatma düzgün görünür */
+      display: none; /* Tabloyu başlangıçta gizler, JS ile gösterilir */
+    }
+    th, td { /* Tablo hücreleri - yazıdan 2px daha geniş */
+      padding: 2px 2px; /* 12px yerine 14px ile 2px daha geniş */
+      border: 1px solid #444444; /* Dumanlı siyah tonunda kenarlık */
+    }
+    th { /* Tablo başlık hücresi */
+      background: #282828; /* Dumanlı siyah arka plan */
+      color: #cea00a;
+      writing-mode: vertical-rl; /* Yazıları dikey döndür */
+      transform: rotate(185deg); /* Yazı yönünü düzelt */
+    }
+    input.data-input { /* Tablo veri girişi inputları */
+      width: 100%;
+      background: #c5e7de;
+      color: #202020;
+      border: none;
+      text-align: center;
+      padding: 6px; /* Yüksekliği artırıldı */
+      font-size: 16px; /* Yazı büyütüldü */
+      height: 40px; /* Kutu yüksekliği artırıldı */
+      box-sizing: border-box;
+    }
+    #saveBtn { /* Kaydet butonu */
+      margin-top: 10px;
+      padding: 10px 20px; font-size: 18px; 
+      background: #da7705;
+      border: 2px solid #282828; /* Dumanlı siyah kenarlık */
+      border-radius: 10px;
+      cursor: pointer;
+      color: #ffffff;
+      transition: 0.3s;
+      display: none;
+    }
+    #saveBtn:hover { /* Kaydet butonu hover */
+      background: #2981f3;
+    }
+  </style>
+@@ -112,10 +112,9 @@
+    <button id="openBtn">Giriş</button>
+  </div>
+
+  <button id="saveBtn">💾 Kaydet</button> <!-- Kaydet butonu tablo üstüne taşındı -->
+  <table id="data-table"></table>
+
+  <!-- Sayfa en altına font boyutu ayarlama butonları -->
+  <div style="margin-top:40px;">
+    <button id="fontInc" style="font-size:16px; padding:2px 8px;">A+</button>
+    <button id="fontDec" style="font-size:16px; padding:2px 8px;">A-</button>
+@@ -145,7 +144,6 @@
+        return;
+      }
+
+      // Başlık satırı
+      const header = document.createElement("tr");
+      data[0].forEach(h => {
+        const th = document.createElement("th");
+@@ -154,21 +152,18 @@
+      });
+      table.appendChild(header);
+
+      // Boş satır (veri girişi) - EN ÜSTE
+      const inputRow = document.createElement("tr");
+      inputRow.id = "input-row";
+      // Türkçe aylar
+      const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+      const now = new Date();
+      // Tarih formatı "gün ay saat:dakika" şeklinde güncellendi (Yeni giriş için zaman bilgisi korunur)
+      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
+      data[0].forEach((h, idx) => {
+        const td = document.createElement("td");
+        const input = document.createElement("input");
+        input.className = "data-input";
+        if (idx === 0) {
+          input.type = "text";
+          input.value = tarihStr; // İlk hücre otomatik zaman verisiyle dolduruluyor
+          input.readOnly = true;
+          input.style.background = "#e0e0e0";
+        } else {
+@@ -177,15 +172,13 @@
+          input.inputMode = "numeric";
+        }
+
+        // Yeni eklenen kısım: '.' tuşuna veya sayısal tuş takımındaki '.' tuşuna basıldığında bir sonraki input'a geçme
+        input.addEventListener("keydown", function(event) {
+          // '.' (nokta) tuşu veya sayısal tuş takımındaki '.' tuşu algılandığında
+          if (event.key === "." || event.key === "NumpadDecimal") {
+            event.preventDefault(); // Varsayılan "." karakterini yazmayı engelle
+            const allInputs = Array.from(inputRow.querySelectorAll(".data-input"));
+            const currentIndex = allInputs.indexOf(this);
+            if (currentIndex > -1 && currentIndex < allInputs.length - 1) {
+              allInputs[currentIndex + 1].focus(); // Bir sonraki input'a odaklan
+            }
+          }
+        });
+@@ -195,13 +188,11 @@
+      });
+      table.appendChild(inputRow);
+
+      // Veri satırları
+      for (let i = data.length - 1; i > 0; i--) {
+        const tr = document.createElement("tr");
+        data[i].forEach((cell, idx) => {
+          const td = document.createElement("td");
+          if (idx === 0) {
+            // Mevcut verideki ISO tarih formatını "gün ay" formatına çevir (Saat ve dakika kaldırıldı)
+            const dateFromCell = new Date(cell);
+            const formattedDate = `${dateFromCell.getDate()} ${aylar[dateFromCell.getMonth()]}`;
+            td.textContent = formattedDate;
+@@ -219,12 +210,12 @@
+
+    async function saveData() {
+      const saveBtn = document.getElementById("saveBtn");
+      saveBtn.disabled = true; // Butona basıldığı anda deaktif
+      const inputs = document.querySelectorAll("#input-row input");
+      const values = Array.from(inputs).map(i => i.value.trim());
+      if (values.every(v => v === "")) {
+        alert("Lütfen veri girin.");
+        saveBtn.disabled = false; // Veri yoksa tekrar aktif
+        return;
+      }
+
+@@ -251,7 +242,7 @@
+        alert("Lütfen bir isim girin.");
+        return;
+      }
+      localStorage.setItem("lastStudentName", name); // Son girilen ismi kaydet
+      const sheets = await getSheetNames();
+      if (!sheets.includes(name)) {
+        alert(`${name} adında bir sayfa bulunamadı.`);
