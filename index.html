@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title> SARIKÖY ORTAOKULU Öğrenci Takip sayfası </title>
+  <title> Halil hoca Öğrenci Takip sayfası </title>
   <style>
     body { 
       font-family: Arial, sans-serif; 
@@ -78,6 +78,7 @@
     }
     input.data-input { 
       width: 100%;
+      min-width: 40px; /* Minimum genişliği burada ayarlayın */
       background: #c5e7de;
       color: #202020;
       border: none;
@@ -101,6 +102,9 @@
     #saveBtn:hover { 
       background: #2981f3;
     }
+    #youtubeLink { /* Yeni eklenen stil */
+      display: none; /* Başlangıçta linki gizle */
+    }
   </style>
 </head>
 <body>
@@ -117,6 +121,9 @@
 
   <div style="margin-top:40px;">
     <button id="fontInc" style="font-size:16px; padding:2px 8px;">A+</button>
+    <a href="https://youtube.com/shorts/AdGlhNpRPcM?si=gPGJ1LLK0l_bHCO2" target="_blank" id="youtubeLink" style="color: #007bff; text-decoration: none; margin: 0 10px; font-weight: bold;">
+      Öğrenci Motivasyonu İçin Harika Bir Video! 🚀 İzlemek İçin Tıkla!
+    </a>
     <button id="fontDec" style="font-size:16px; padding:2px 8px;">A-</button>
   </div>
 
@@ -210,24 +217,98 @@
 
     async function saveData() {
       const saveBtn = document.getElementById("saveBtn");
-      saveBtn.disabled = true;
+      const youtubeLink = document.getElementById("youtubeLink"); // Linki al
+      saveBtn.disabled = true; // Kaydetme butonunu devre dışı bırak
+      youtubeLink.style.display = "inline"; // Buton pasifleşince linki göster
+
       const inputs = document.querySelectorAll("#input-row input");
       const values = Array.from(inputs).map(i => i.value.trim());
+
       if (values.every(v => v === "")) {
         alert("Lütfen veri girin.");
         saveBtn.disabled = false;
+        youtubeLink.style.display = "none"; // Eğer veri yoksa ve kaydedilmiyorsa linki tekrar gizle
         return;
       }
 
-      const body = new URLSearchParams();
-      body.append("mode", "append");
-      body.append("sheet", currentSheet);
-      body.append("data", JSON.stringify(values));
+      // Yeni girişin tarihi için Date objesi oluştur
+      const nowForNewEntry = new Date();
+      // Yeni girişin sadece gün, ay, yıl bilgisini al (saati gece yarısına ayarla)
+      const newEntryDateOnly = new Date(nowForNewEntry.getFullYear(), nowForNewEntry.getMonth(), nowForNewEntry.getDate());
 
-      const res = await fetch(API_URL, { method: "POST", body });
-      const result = await res.json();
-      alert(result.message || "Veri eklendi!");
-      loadSheet(currentSheet);
+      // Mevcut sayfa verilerini çek
+      const sheetData = await getSheetData(currentSheet);
+
+      let lastRecordedDate = null;
+      if (sheetData && sheetData.length > 1) { // Başlık satırı hariç en az bir veri satırı varsa
+        // Son veri satırının ilk sütunundaki tarih değerini al
+        const lastEntryDateString = sheetData[sheetData.length - 1][0];
+        lastRecordedDate = new Date(lastEntryDateString); // Bu string'in Date objesine dönüşebildiğini varsayıyoruz
+      }
+
+      const entriesToAppend = []; // Eklenecek tüm girişleri tutacak dizi
+
+      if (lastRecordedDate && !isNaN(lastRecordedDate.getTime())) { // Geçerli bir son kaydedilen tarih varsa
+        // Son kaydedilen tarihin sadece gün, ay, yıl bilgisini al (saati gece yarısına ayarla)
+        const lastMidnight = new Date(lastRecordedDate.getFullYear(), lastRecordedDate.getMonth(), lastRecordedDate.getDate());
+        
+        // Yeni giriş tarihi ile son kaydedilen tarih arasındaki gün farkını hesapla
+        const timeDiff = newEntryDateOnly.getTime() - lastMidnight.getTime();
+        const dayDiff = Math.floor(timeDiff / (1000 * 3600 * 24)); // Gün farkı
+
+        if (dayDiff > 1) { // Eğer 1 günden fazla bir boşluk varsa
+          for (let i = 1; i < dayDiff; i++) {
+            const missingDate = new Date(lastMidnight.getTime() + i * (1000 * 3600 * 24));
+            
+            // Eksik gün için doldurucu bir tarih stringi oluştur (GG.AA.YYYY HH:MM:SS formatında)
+            const month = (missingDate.getMonth() + 1).toString().padStart(2, "0");
+            const day = missingDate.getDate().toString().padStart(2, "0");
+            const year = missingDate.getFullYear();
+            const formattedMissingDateForBackend = `${day}.${month}.${year} 00:00:00`;
+            
+            // Doldurucu satır oluştur: Tarih ve diğer tüm sütunlar boş
+            const fillerRow = [formattedMissingDateForBackend, ...Array(values.length - 1).fill('')];
+            entriesToAppend.push(fillerRow);
+          }
+        }
+      }
+
+      // Kullanıcının girdiği asıl veriyi de eklenecekler listesine ekle
+      // values[0] sadece görüntü için kullanılan formatlanmış bir stringdir.
+      // Backend'e gönderilecek tarih stringini nowForNewEntry'den oluşturmalıyız.
+      const month = (nowForNewEntry.getMonth() + 1).toString().padStart(2, "0");
+      const day = nowForNewEntry.getDate().toString().padStart(2, "0");
+      const year = nowForNewEntry.getFullYear();
+      const hours = nowForNewEntry.getHours().toString().padStart(2, "0");
+      const minutes = nowForNewEntry.getMinutes().toString().padStart(2, "0");
+      const formattedActualDateForBackend = `${day}.${month}.${year} ${hours}:${minutes}:00`;
+      
+      // Asıl veri satırını oluştur, ilk değeri güncel olarak formatlanmış tam tarih stringi ile değiştir
+      const actualDataRow = [formattedActualDateForBackend, ...values.slice(1)]; // values[0] atlanır
+      entriesToAppend.push(actualDataRow);
+
+      let allSucceeded = true;
+      for (const entry of entriesToAppend) {
+        const body = new URLSearchParams();
+        body.append("mode", "append");
+        body.append("sheet", currentSheet);
+        body.append("data", JSON.stringify(entry));
+
+        const res = await fetch(API_URL, { method: "POST", body });
+        const result = await res.json();
+        if (!result.success) {
+          alert(`Veri kaydetme hatası: ${result.message || "Bilinmeyen hata"}`);
+          allSucceeded = false;
+          break;
+        }
+      }
+
+      if (allSucceeded) {
+        alert("Veri(ler) başarıyla kaydedildi!");
+      }
+      saveBtn.disabled = false; // Butonu tekrar aktif et
+      youtubeLink.style.display = "none"; // Buton aktifleşince linki gizle
+      loadSheet(currentSheet); // Sayfayı yeniden yükle
     }
 
     async function loadSheet(name) {
