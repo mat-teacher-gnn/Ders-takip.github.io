@@ -48,7 +48,7 @@
     button { 
       padding: 8px 20px;
       background: #ff7b00;
-      border: 2px solid #007bff; 
+      border: 2px solid #2780df; 
       border-radius: 6px;
       cursor: pointer;
       color: #fff;
@@ -72,7 +72,7 @@
     }
     th { 
       background: #282828; 
-      color: #cea00a;
+      color: rgb(250, 228, 162);
       writing-mode: vertical-rl; 
       transform: rotate(185deg); 
     }
@@ -100,10 +100,45 @@
       display: none;
     }
     #saveBtn:hover { 
-      background: #2981f3;
+      background: #3d84e2;
     }
     #youtubeLink { /* Yeni eklenen stil */
       display: none; /* Başlangıçta linki gizle */
+    }
+    #dateSelectionModal { /* Yeni eklenen stil */
+      display: none; /* Başlangıçta gizli */
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: #282828;
+      padding: 25px;
+      border-radius: 10px;
+      border: 2px solid #ff7b00;
+      z-index: 1000;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+    #dateSelectionModal button {
+      display: block;
+      width: 80%;
+      margin: 10px auto;
+      padding: 12px;
+      font-size: 1em;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #dateSelectionModal button:hover {
+      background: #2972c0;
+    }
+    #dateSelectionModal h2 {
+      color: #c1c1c9;
+      margin-bottom: 20px;
     }
   </style>
 </head>
@@ -114,6 +149,15 @@
     <input type="text" id="studentName" placeholder="Öğrenci ismini yaz..." />
     <br />
     <button id="openBtn">Giriş</button>
+  </div>
+
+  <!-- Yeni tarih seçim modalı -->
+  <div id="dateSelectionModal">
+    <h2>Giriş Yapılacak Tarihi Seçin</h2>
+    <button id="selectToday">Bugün</button>
+    <button id="selectYesterday">Dün</button>
+    <button id="selectTwoDaysAgo">İki Gün Önce</button>
+    <button id="cancelDateSelection">Vazgeç</button>
   </div>
 
   <button id="saveBtn">💾 Kaydet</button> 
@@ -130,6 +174,7 @@
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwxkg567Zvpzn6zHCmGOsd7w6_Fw4NGrIbWcVAOT7pe_tTWuwi5xOjFZzg4c5h2hnowyw/exec";
     let currentSheet = "";
+    let selectedEntryDate = null; // Seçilen giriş tarihini tutacak değişken
 
     async function getSheetNames() {
       const res = await fetch(API_URL + "?mode=sheets");
@@ -162,38 +207,49 @@
       const inputRow = document.createElement("tr");
       inputRow.id = "input-row";
       const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-      const now = new Date();
-      const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")}`;
-      data[0].forEach((h, idx) => {
-        const td = document.createElement("td");
-        const input = document.createElement("input");
-        input.className = "data-input";
-        if (idx === 0) {
-          input.type = "text";
-          input.value = tarihStr;
-          input.readOnly = true;
-          input.style.background = "#e0e0e0";
-        } else {
-          input.type = "number";
-          input.pattern = "[0-9]*";
-          input.inputMode = "numeric";
-        }
-
-        input.addEventListener("keydown", function(event) {
-          if (event.key === "." || event.key === "NumpadDecimal") {
-            event.preventDefault();
-            const allInputs = Array.from(inputRow.querySelectorAll(".data-input"));
-            const currentIndex = allInputs.indexOf(this);
-            if (currentIndex > -1 && currentIndex < allInputs.length - 1) {
-              allInputs[currentIndex + 1].focus();
-            }
+      // Tarih inputu için selectedEntryDate kullanılıyor
+      if (selectedEntryDate) {
+        const tarihStr = `${selectedEntryDate.getDate()} ${aylar[selectedEntryDate.getMonth()]} ${selectedEntryDate.getHours().toString().padStart(2, "0")}:${selectedEntryDate.getMinutes().toString().padStart(2, "0")}`;
+        data[0].forEach((h, idx) => {
+          const td = document.createElement("td");
+          const input = document.createElement("input");
+          input.className = "data-input";
+          if (idx === 0) {
+            input.type = "text";
+            input.value = tarihStr; // Seçilen tarihi göster
+            input.readOnly = true;
+            input.style.background = "#e0e0e0";
+          } else {
+            input.type = "number";
+            input.pattern = "[0-9]*";
+            input.inputMode = "numeric";
           }
-        });
 
-        td.appendChild(input);
+          input.addEventListener("keydown", function(event) {
+            if (event.key === "." || event.key === "NumpadDecimal") {
+              event.preventDefault();
+              const allInputs = Array.from(inputRow.querySelectorAll(".data-input"));
+              const currentIndex = allInputs.indexOf(this);
+              if (currentIndex > -1 && currentIndex < allInputs.length - 1) {
+                allInputs[currentIndex + 1].focus();
+              }
+            }
+          });
+
+          td.appendChild(input);
+          inputRow.appendChild(td);
+        });
+        table.appendChild(inputRow);
+      } else {
+        // Eğer tarih seçilmediyse veya renderTable yanlışlıkla çağrıldıysa boş bir satır göster
+        const td = document.createElement("td");
+        td.colSpan = data[0].length;
+        td.textContent = "Tarih seçimi yapılmadı.";
         inputRow.appendChild(td);
-      });
-      table.appendChild(inputRow);
+        table.appendChild(inputRow);
+        saveBtn.style.display = "none";
+        return;
+      }
 
       for (let i = data.length - 1; i > 0; i--) {
         const tr = document.createElement("tr");
@@ -231,8 +287,8 @@
         return;
       }
 
-      // Yeni girişin tarihi için Date objesi oluştur
-      const nowForNewEntry = new Date();
+      // Yeni girişin tarihi için Date objesi oluştur (selectedEntryDate kullanılıyor)
+      const nowForNewEntry = selectedEntryDate;
       // Yeni girişin sadece gün, ay, yıl bilgisini al (saati gece yarısına ayarla)
       const newEntryDateOnly = new Date(nowForNewEntry.getFullYear(), nowForNewEntry.getMonth(), nowForNewEntry.getDate());
 
@@ -312,7 +368,7 @@
     }
 
     async function loadSheet(name) {
-      currentSheet = name;
+      currentSheet = name; // currentSheet'i burada da güncelleyelim, openSheet'ten aktarılacak
       const data = await getSheetData(name);
       renderTable(data);
     }
@@ -330,8 +386,54 @@
         return;
       }
       document.getElementById("login").style.display = "none";
-      loadSheet(name);
+      currentSheet = name; // Sayfa adını burada ayarlıyoruz ki tarih seçiminden sonra kullanabilelim
+      showDateSelectionModal(); // Tarih seçim modalını göster
     }
+
+    function showDateSelectionModal() {
+      const dateSelectionModal = document.getElementById("dateSelectionModal");
+      dateSelectionModal.style.display = "block";
+
+      const aylar = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const twoDaysAgo = new Date(today);
+      twoDaysAgo.setDate(today.getDate() - 2);
+
+      // Bugün
+      document.getElementById("selectToday").textContent = `${today.getDate()} ${aylar[today.getMonth()]}`;
+      document.getElementById("selectToday").onclick = function() {
+        selectedEntryDate = today;
+        dateSelectionModal.style.display = "none";
+        loadSheet(currentSheet);
+      };
+
+      // Dün
+      document.getElementById("selectYesterday").textContent = `${yesterday.getDate()} ${aylar[yesterday.getMonth()]}`;
+      document.getElementById("selectYesterday").onclick = function() {
+        selectedEntryDate = yesterday;
+        dateSelectionModal.style.display = "none";
+        loadSheet(currentSheet);
+      };
+
+      // İki Gün Önce
+      document.getElementById("selectTwoDaysAgo").textContent = `${twoDaysAgo.getDate()} ${aylar[twoDaysAgo.getMonth()]}`;
+      document.getElementById("selectTwoDaysAgo").onclick = function() {
+        selectedEntryDate = twoDaysAgo;
+        dateSelectionModal.style.display = "none";
+        loadSheet(currentSheet);
+      };
+
+      // Vazgeç
+      document.getElementById("cancelDateSelection").onclick = function() {
+        dateSelectionModal.style.display = "none";
+        document.getElementById("login").style.display = "block"; // Giriş ekranına geri dön
+        selectedEntryDate = null; // Seçimi sıfırla
+      };
+    }
+
 
     document.addEventListener("DOMContentLoaded", function() {
       const studentInput = document.getElementById("studentName");
