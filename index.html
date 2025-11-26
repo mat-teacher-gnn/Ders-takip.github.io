@@ -445,7 +445,7 @@
       }
 
       // Rastgele arkaplan resmi seçimi
-      const NUM_BACKGROUND_IMAGES = 5; // `res/Resim (1).jpeg` den `res/Resim (5).jpeg`'e kadar olduğunu varsayalım. Bu değeri resim sayınıza göre ayarlayın.
+      const NUM_BACKGROUND_IMAGES = 32; // `res/Resim (1).jpeg` den `res/Resim (5).jpeg`'e kadar olduğunu varsayalım. Bu değeri resim sayınıza göre ayarlayın.
       const randomIndex = Math.floor(Math.random() * NUM_BACKGROUND_IMAGES) + 1; // 1 ile NUM_BACKGROUND_IMAGES arasında rastgele sayı
       document.body.style.backgroundImage = `url('res/Resim (${randomIndex}).jpeg')`;
       document.body.style.backgroundSize = 'cover'; // Resmi tüm alanı kaplayacak şekilde ayarla
