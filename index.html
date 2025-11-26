@@ -12,11 +12,12 @@
       margin: 0; 
       padding: 0; 
       text-align: center; 
-      background-image: url('resim1.png'); 
-      background-position: center center; 
-      background-repeat: no-repeat; 
-      background-size: 100%; 
-      background-attachment: fixed; 
+      /* Mevcut arka plan resmi tanımlarını kaldır */
+      /* background-image: url('resim1.png'); */ 
+      /* background-position: center center; */ 
+      /* background-repeat: no-repeat; */ 
+      /* background-size: 100%; */ 
+      /* background-attachment: fixed; */ 
     }
     h1 { 
       margin: 20px auto; 
@@ -442,6 +443,15 @@
         studentInput.value = lastStudent;
         studentInput.placeholder = lastStudent;
       }
+
+      // Rastgele arkaplan resmi seçimi
+      const NUM_BACKGROUND_IMAGES = 5; // `res/Resim (1).jpeg` den `res/Resim (5).jpeg`'e kadar olduğunu varsayalım. Bu değeri resim sayınıza göre ayarlayın.
+      const randomIndex = Math.floor(Math.random() * NUM_BACKGROUND_IMAGES) + 1; // 1 ile NUM_BACKGROUND_IMAGES arasında rastgele sayı
+      document.body.style.backgroundImage = `url('res/Resim (${randomIndex}).jpeg')`;
+      document.body.style.backgroundSize = 'cover'; // Resmi tüm alanı kaplayacak şekilde ayarla
+      document.body.style.backgroundRepeat = 'no-repeat';
+      document.body.style.backgroundPosition = 'center center';
+      document.body.style.backgroundAttachment = 'fixed';
     });
 
     document.getElementById("openBtn").onclick = openSheet;
